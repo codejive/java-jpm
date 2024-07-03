@@ -10,19 +10,21 @@ import java.nio.file.Path;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class JpmProject {
+public class AppInfo {
     public Map<String, String> dependencies;
 
-    public static JpmProject read() throws IOException {
-        Path prjJson = Path.of("deps.json");
-        JpmProject prj;
+    public static final String APP_INFO_FILE = "app.json";
+
+    public static AppInfo read() throws IOException {
+        Path prjJson = Path.of(APP_INFO_FILE);
+        AppInfo prj;
         if (Files.isRegularFile(prjJson)) {
             try (Reader in = Files.newBufferedReader(prjJson)) {
                 Gson parser = new GsonBuilder().create();
-                prj = parser.fromJson(in, JpmProject.class);
+                prj = parser.fromJson(in, AppInfo.class);
             }
         } else {
-            prj = new JpmProject();
+            prj = new AppInfo();
         }
         if (prj.dependencies == null) {
             prj.dependencies = new TreeMap<>();
@@ -32,8 +34,8 @@ public class JpmProject {
         return prj;
     }
 
-    public static void write(JpmProject prj) throws IOException {
-        Path prjJson = Path.of("deps.json");
+    public static void write(AppInfo prj) throws IOException {
+        Path prjJson = Path.of(APP_INFO_FILE);
         try (Writer out = Files.newBufferedWriter(prjJson)) {
             Gson parser = new GsonBuilder().setPrettyPrinting().create();
             parser.toJson(prj, out);

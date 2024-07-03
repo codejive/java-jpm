@@ -3,7 +3,7 @@ package org.codejive.jpm;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import org.codejive.jpm.json.JpmProject;
+import org.codejive.jpm.json.AppInfo;
 import org.codejive.jpm.util.FileUtils;
 import org.codejive.jpm.util.ResolverUtils;
 import org.codejive.jpm.util.SyncStats;
@@ -57,7 +57,7 @@ public class Jpm {
 
     public SyncStats install(String[] artifactNames)
             throws IOException, DependencyResolutionException {
-        JpmProject prj = JpmProject.read();
+        AppInfo prj = AppInfo.read();
         String[] artifacts = getArtifacts(artifactNames, prj);
         if (artifacts.length > 0) {
             List<Path> files = ResolverUtils.resolveArtifactPaths(artifacts);
@@ -69,7 +69,7 @@ public class Jpm {
                     String version = dep.substring(p + 1);
                     prj.dependencies.put(name, version);
                 }
-                JpmProject.write(prj);
+                AppInfo.write(prj);
             }
             return stats;
         } else {
@@ -79,7 +79,7 @@ public class Jpm {
 
     public List<Path> path(String[] artifactNames)
             throws DependencyResolutionException, IOException {
-        JpmProject prj = JpmProject.read();
+        AppInfo prj = AppInfo.read();
         String[] deps = getArtifacts(artifactNames, prj);
         if (deps.length > 0) {
             return ResolverUtils.resolveArtifactPaths(deps);
@@ -88,7 +88,7 @@ public class Jpm {
         }
     }
 
-    private static String[] getArtifacts(String[] artifactNames, JpmProject prj) {
+    private static String[] getArtifacts(String[] artifactNames, AppInfo prj) {
         String[] deps;
         if (artifactNames.length > 0) {
             deps = artifactNames;
