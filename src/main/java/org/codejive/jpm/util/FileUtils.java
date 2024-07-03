@@ -37,6 +37,9 @@ public class FileUtils {
                 copyDependency(artifact, directory, noLinks);
                 artifactsToDelete.remove(artifactName);
                 stats.copied++;
+            } else if (Files.isSymbolicLink(target) == noLinks) {
+                copyDependency(artifact, directory, noLinks);
+                stats.updated++;
             }
         }
 

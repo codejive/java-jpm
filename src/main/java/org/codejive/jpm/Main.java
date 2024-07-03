@@ -181,7 +181,9 @@ public class Main {
     }
 
     private static void printStats(SyncStats stats) {
-        System.err.printf("Artifacts copied: %d, deleted: %d%n", stats.copied, stats.deleted);
+        System.err.printf(
+                "Artifacts new: %d, updated: %d, deleted: %d%n",
+                stats.copied, stats.updated, stats.deleted);
     }
 
     public static void main(String... args) {
