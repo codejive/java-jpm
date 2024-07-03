@@ -93,10 +93,7 @@ public class Jpm {
         if (artifactNames.length > 0) {
             deps = artifactNames;
         } else {
-            deps =
-                    prj.dependencies.entrySet().stream()
-                            .map(e -> e.getKey() + ":" + e.getValue())
-                            .toArray(String[]::new);
+            deps = prj.getDependencyGAVs();
         }
         return deps;
     }

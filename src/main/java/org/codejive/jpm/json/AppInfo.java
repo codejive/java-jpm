@@ -11,34 +11,43 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class AppInfo {
-    public Map<String, String> dependencies;
+    private Map<String, Object> json;
+    public Map<String, String> dependencies = new TreeMap<>();
 
     public static final String APP_INFO_FILE = "app.json";
 
+    public String[] getDependencyGAVs() {
+        return dependencies.entrySet().stream()
+                .map(e -> e.getKey() + ":" + e.getValue())
+                .toArray(String[]::new);
+    }
+
     public static AppInfo read() throws IOException {
         Path prjJson = Path.of(APP_INFO_FILE);
-        AppInfo prj;
+        AppInfo appInfo = new AppInfo();
         if (Files.isRegularFile(prjJson)) {
             try (Reader in = Files.newBufferedReader(prjJson)) {
                 Gson parser = new GsonBuilder().create();
-                prj = parser.fromJson(in, AppInfo.class);
+                appInfo.json = parser.fromJson(in, Map.class);
             }
         } else {
-            prj = new AppInfo();
+            appInfo = new AppInfo();
         }
-        if (prj.dependencies == null) {
-            prj.dependencies = new TreeMap<>();
-        } else {
-            prj.dependencies = new TreeMap<>(prj.dependencies);
+        // WARNING awful code ahead
+        if (appInfo.json.containsKey("dependencies")
+                && appInfo.json.get("dependencies") instanceof Map) {
+            appInfo.dependencies.putAll((Map<String, String>) appInfo.json.get("dependencies"));
         }
-        return prj;
+        return appInfo;
     }
 
-    public static void write(AppInfo prj) throws IOException {
+    public static void write(AppInfo appInfo) throws IOException {
         Path prjJson = Path.of(APP_INFO_FILE);
         try (Writer out = Files.newBufferedWriter(prjJson)) {
             Gson parser = new GsonBuilder().setPrettyPrinting().create();
-            parser.toJson(prj, out);
+            // WARNING awful code ahead
+            appInfo.json.put("dependencies", (Map<String, Object>) (Map) appInfo.dependencies);
+            parser.toJson(appInfo.json, out);
         }
     }
 }
