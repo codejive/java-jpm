@@ -57,8 +57,8 @@ public class Jpm {
 
     public SyncStats install(String[] artifactNames)
             throws IOException, DependencyResolutionException {
-        AppInfo prj = AppInfo.read();
-        String[] artifacts = getArtifacts(artifactNames, prj);
+        AppInfo appInfo = AppInfo.read();
+        String[] artifacts = getArtifacts(artifactNames, appInfo);
         if (artifacts.length > 0) {
             List<Path> files = ResolverUtils.resolveArtifactPaths(artifacts);
             SyncStats stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
@@ -67,9 +67,9 @@ public class Jpm {
                     int p = dep.lastIndexOf(':');
                     String name = dep.substring(0, p);
                     String version = dep.substring(p + 1);
-                    prj.dependencies.put(name, version);
+                    appInfo.dependencies.put(name, version);
                 }
-                AppInfo.write(prj);
+                AppInfo.write(appInfo);
             }
             return stats;
         } else {
@@ -79,8 +79,8 @@ public class Jpm {
 
     public List<Path> path(String[] artifactNames)
             throws DependencyResolutionException, IOException {
-        AppInfo prj = AppInfo.read();
-        String[] deps = getArtifacts(artifactNames, prj);
+        AppInfo appInfo = AppInfo.read();
+        String[] deps = getArtifacts(artifactNames, appInfo);
         if (deps.length > 0) {
             return ResolverUtils.resolveArtifactPaths(deps);
         } else {
@@ -88,12 +88,12 @@ public class Jpm {
         }
     }
 
-    private static String[] getArtifacts(String[] artifactNames, AppInfo prj) {
+    private static String[] getArtifacts(String[] artifactNames, AppInfo appInfo) {
         String[] deps;
         if (artifactNames.length > 0) {
             deps = artifactNames;
         } else {
-            deps = prj.getDependencyGAVs();
+            deps = appInfo.getDependencyGAVs();
         }
         return deps;
     }
