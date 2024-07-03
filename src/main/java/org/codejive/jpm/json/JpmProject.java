@@ -12,10 +12,9 @@ import java.util.TreeMap;
 
 public class JpmProject {
     public Map<String, String> dependencies;
-    public Map<String, String> commands;
 
     public static JpmProject read() throws IOException {
-        Path prjJson = Path.of("jpm.json");
+        Path prjJson = Path.of("deps.json");
         JpmProject prj;
         if (Files.isRegularFile(prjJson)) {
             try (Reader in = Files.newBufferedReader(prjJson)) {
@@ -30,16 +29,11 @@ public class JpmProject {
         } else {
             prj.dependencies = new TreeMap<>(prj.dependencies);
         }
-        if (prj.commands == null) {
-            prj.commands = new TreeMap<>();
-        } else {
-            prj.commands = new TreeMap<>(prj.commands);
-        }
         return prj;
     }
 
     public static void write(JpmProject prj) throws IOException {
-        Path prjJson = Path.of("jpm.json");
+        Path prjJson = Path.of("deps.json");
         try (Writer out = Files.newBufferedWriter(prjJson)) {
             Gson parser = new GsonBuilder().setPrettyPrinting().create();
             parser.toJson(prj, out);

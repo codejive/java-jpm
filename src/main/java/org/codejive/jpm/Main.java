@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import org.codejive.jpm.json.JpmProject;
 import org.codejive.jpm.util.SyncStats;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -26,13 +25,7 @@ import picocli.CommandLine.Parameters;
         mixinStandardHelpOptions = true,
         version = "jpm 0.1",
         description = "Simple command line tool for managing Maven artifacts",
-        subcommands = {
-            Main.Copy.class,
-            Main.Sync.class,
-            Main.Install.class,
-            Main.PrintPath.class,
-            Main.Run.class
-        })
+        subcommands = {Main.Copy.class, Main.Sync.class, Main.Install.class, Main.PrintPath.class})
 public class Main {
 
     @Command(
@@ -91,9 +84,9 @@ public class Main {
             name = "install",
             aliases = {"i"},
             description =
-                    "This adds the given artifacts to the list of dependencies available in the jpm.json file. "
-                            + "It then behaves just like 'sync' and copies all artifacts in that list and all their dependencies to the target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned in the jpm.json file)."
-                            + "If no artifacts are passed the jpm.json file will be left untouched and only the existing dependencies in the file will be copied.\n\n"
+                    "This adds the given artifacts to the list of dependencies available in the deps.json file. "
+                            + "It then behaves just like 'sync' and copies all artifacts in that list and all their dependencies to the target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned in the deps.json file)."
+                            + "If no artifacts are passed the deps.json file will be left untouched and only the existing dependencies in the file will be copied.\n\n"
                             + "Example:\n  jpm install org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Install implements Callable<Integer> {
         @Mixin QuietMixin quietMixin;
@@ -119,7 +112,7 @@ public class Main {
             aliases = {"p"},
             description =
                     "Resolves one or more artifacts and prints the full classpath to standard output. "
-                            + "If no artifacts are passed the classpath for the dependencies defined in the jpm.json file will be printed instead.\n\n"
+                            + "If no artifacts are passed the classpath for the dependencies defined in the deps.json file will be printed instead.\n\n"
                             + "Example:\n  jpm path org.apache.httpcomponents:httpclient:4.5.14\n")
     static class PrintPath implements Callable<Integer> {
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
@@ -140,54 +133,6 @@ public class Main {
                 System.out.print(classpath);
             }
             return 0;
-        }
-    }
-
-    @Command(
-            name = "run",
-            aliases = {"r"},
-            description =
-                    "Run given command defined in the jpm.json project file\n\n"
-                            + "Example:\n  jpm run run-me\n")
-    static class Run implements Callable<Integer> {
-        @Parameters(
-                paramLabel = "name",
-                description =
-                        "The name of the command to run. Commands are defined in the jpm.json project file",
-                index = "0",
-                arity = "0..1")
-        private String name;
-
-        @Parameters(
-                paramLabel = "arguments",
-                description = "Optional list of additional arguments",
-                index = "1..*",
-                arity = "0..*")
-        private String[] args = {};
-
-        @Override
-        public Integer call() throws Exception {
-            if (name == null) {
-                Map<String, String> cmds = JpmProject.read().commands;
-                if (cmds.isEmpty()) {
-                    System.err.println("No commands defined in the jpm.json project file");
-                } else {
-                    System.err.println("Available commands:");
-                    for (String cmd : cmds.keySet()) {
-                        System.err.println("  " + cmd);
-                        System.err.println("    " + cmds.get(cmd));
-                    }
-                }
-                return 0;
-            }
-            try {
-                return Jpm.builder().build().run(name, args);
-            } catch (IllegalArgumentException e) {
-                System.err.printf(
-                        "No command with the name '%s' exists in the jpm.json project file%n",
-                        name);
-                return 1;
-            }
         }
     }
 

@@ -88,25 +88,6 @@ public class Jpm {
         }
     }
 
-    public int run(String name, String[] args) throws IOException, InterruptedException {
-        String cmdString = JpmProject.read().commands.get(name);
-        if (cmdString == null) {
-            throw new IllegalArgumentException("Command not found: " + name);
-        }
-        String[] quotedArgs =
-                Arrays.stream(args)
-                        .map(a -> a.contains(" ") ? "\"" + a + "\"" : a)
-                        .toArray(String[]::new);
-        String extraArgs = String.join(" ", quotedArgs);
-        String[] cmd;
-        if (isWindows()) {
-            cmd = new String[] {"cmd", "/c", String.join(" ", cmdString, extraArgs)};
-        } else {
-            cmd = new String[] {"/bin/sh", "-c", String.join(" ", cmdString, extraArgs)};
-        }
-        return new ProcessBuilder(cmd).inheritIO().start().waitFor();
-    }
-
     private static String[] getArtifacts(String[] artifactNames, JpmProject prj) {
         String[] deps;
         if (artifactNames.length > 0) {
