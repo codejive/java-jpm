@@ -1,0 +1,62 @@
+# Generated with JReleaser 1.14.0-SNAPSHOT at 2024-07-02T18:57:13.31908+02:00
+project:
+  name: jpm
+  version: 0.1-SNAPSHOT
+  description: Java Package Manager
+  longDescription: |
+    A simple command line tool, taking inspiration from Node's npm, to manage Maven dependencies for Java projects
+    that are not using build systems like Maven or Gradle.
+  authors:
+    - Tako Schotanus
+  tags:
+    - java
+    - cli
+    - dependencies
+    - packages
+    - artifacts
+    - maven
+  license: Apache-2.0
+  links:
+    homepage: https://github.com/codejive/java-jpm
+  java:
+    groupId: org.codejive.jpm
+    version: 8
+    mainClass: org.codejive.jpm.Main
+  inceptionYear: 2024
+  stereotype: CLI
+
+assemble:
+  javaArchive:
+    jpm:
+      active: ALWAYS
+      formats:
+        - ZIP
+        - TGZ
+      mainJar:
+        path: 'target/{{distributionName}}-{{projectVersion}}.jar'
+      jars:
+        - pattern: 'target/binary/lib/*.jar'
+
+release:
+  github:
+    owner: codejive
+    name: java-jpm
+    overwrite: true
+    changelog:
+      formatted: ALWAYS
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
+
+checksum:
+  individual: true
+
+signing:
+  active: ALWAYS
+  armored: true
+
+distributions:
+  jpm:
+    artifacts:
+      - path: target/jreleaser/assemble/{{distributionName}}/java-archive/{{distributionName}}-{{projectVersion}}.zip
+      - path: target/jreleaser/assemble/{{distributionName}}/java-archive/{{distributionName}}-{{projectVersion}}.zip
