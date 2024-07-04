@@ -1,32 +1,22 @@
 
-Use the following to test an incremental release + deploy:
+# Release instructions
 
-```
-mvn -B release:clean release:prepare -DdryRun=true
-```
+Use the following create a release and deploy:
 
-If everything seems successful the following will actual perform a deploy:
+## Step 1 - Building, staging and assembling
 
-```
-mvn -B release:clean release:prepare release:perform
+```bash
+./mvnw clean deploy jreleaser:assemble -Prelease
 ```
 
-_WARNING: Make sure **JAVA_HOME** is set or the release will fail!_
+## Step 2 - Do a dry-run of the full release
 
-If something went wrong you can roll back the release using:
-
-```
-mvn release:rollback
+```bash
+./mvnw jreleaser:full-release -Djreleaser.dry.run
 ```
 
-Use this command to set a specific version:
+## Step 3 - Perform the full release
 
-```
-mvn -B release:update-versions -DdevelopmentVersion=1.2.3-SNAPSHOT
-```
-
-A manual deploy can be done like this:
-
-```
-mvn clean deploy -P release
+```bash
+./mvnw jreleaser:full-release
 ```

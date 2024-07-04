@@ -1,7 +1,6 @@
 # Generated with JReleaser 1.14.0-SNAPSHOT at 2024-07-02T18:57:13.31908+02:00
 project:
   name: jpm
-  version: 0.1-SNAPSHOT
   description: Java Package Manager
   longDescription: |
     A simple command line tool, taking inspiration from Node's npm, to manage Maven dependencies for Java projects
@@ -36,6 +35,17 @@ assemble:
         path: 'target/{{distributionName}}-{{projectVersion}}.jar'
       jars:
         - pattern: 'target/binary/lib/*.jar'
+
+deploy:
+  maven:
+    nexus2:
+      maven-central:
+        active: RELEASE
+        url: https://s01.oss.sonatype.org/service/local
+        closeRepository: true
+        releaseRepository: true
+        stagingRepositories:
+          - target/staging-deploy
 
 release:
   github:
