@@ -1,0 +1,9 @@
+{
+  "bundles" : [
+  ],
+  "resources": {
+    "includes": [
+      {"pattern": "org/apache/maven/model/pom-4\\.0\\.0\\.xml"}
+    ]
+  }
+}
