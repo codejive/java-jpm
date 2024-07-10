@@ -9,7 +9,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/** Utility class for file operations. */
 public class FileUtils {
+
+    /**
+     * Synchronizes a list of artifacts with a target directory.
+     *
+     * @param artifacts list of artifacts to synchronize
+     * @param directory target directory
+     * @param noLinks if true, copy artifacts instead of creating symbolic links
+     * @param noDelete if true, do not delete artifacts that are no longer needed
+     * @return An instance of {@link SyncStats} with statistics about the synchronization
+     * @throws IOException if an error occurred during the synchronization
+     */
     public static SyncStats syncArtifacts(
             List<Path> artifacts, Path directory, boolean noLinks, boolean noDelete)
             throws IOException {

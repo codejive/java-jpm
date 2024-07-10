@@ -18,7 +18,17 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
+/** Utility class for resolving Maven artifacts. */
 public class ResolverUtils {
+    /**
+     * Resolves the paths of the given artifacts. Handles parsing and resolving of artifacts and
+     * extracts their paths.
+     *
+     * @param artifactNames the artifacts to resolve as an array of strings in the format
+     *     "groupId:artifactId:version"
+     * @return the paths of the resolved artifacts
+     * @throws DependencyResolutionException if an error occurs while resolving the artifacts
+     */
     public static List<Path> resolveArtifactPaths(String[] artifactNames)
             throws DependencyResolutionException {
         List<Artifact> artifacts = parseArtifacts(artifactNames);
@@ -26,10 +36,24 @@ public class ResolverUtils {
         return resolvedArtifacts.stream().map(ar -> ar.getArtifact().getFile().toPath()).toList();
     }
 
+    /**
+     * Parses the given artifact names into a list of {@link Artifact} instances.
+     *
+     * @param artifactNames the artifact names to parse as an array of strings in the format
+     *     "groupId:artifactId:version"
+     * @return a list of {@link Artifact} instances
+     */
     public static List<Artifact> parseArtifacts(String[] artifactNames) {
         return Arrays.stream(artifactNames).map(DefaultArtifact::new).collect(Collectors.toList());
     }
 
+    /**
+     * Resolves the given artifacts.
+     *
+     * @param artifacts the artifacts to resolve as a list of {@link Artifact} instances
+     * @return the resolved artifacts as a list of {@link ArtifactResult} instances
+     * @throws DependencyResolutionException if an error occurs while resolving the artifacts
+     */
     public static List<ArtifactResult> resolveArtifacts(List<Artifact> artifacts)
             throws DependencyResolutionException {
         List<Dependency> dependencies =

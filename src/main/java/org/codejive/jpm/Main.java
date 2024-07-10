@@ -21,6 +21,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+/** Main class for the jpm command line tool. */
 @Command(
         name = "jpm",
         mixinStandardHelpOptions = true,
@@ -204,6 +205,11 @@ public class Main {
                 stats.copied, stats.updated, stats.deleted);
     }
 
+    /**
+     * Main entry point for the jpm command line tool.
+     *
+     * @param args The command line arguments.
+     */
     public static void main(String... args) {
         new CommandLine(new Main()).execute(args);
     }
