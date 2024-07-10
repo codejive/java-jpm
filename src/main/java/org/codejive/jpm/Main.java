@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.codejive.jpm.util.SyncStats;
+import org.codejive.jpm.util.Version;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -23,7 +24,7 @@ import picocli.CommandLine.Parameters;
 @Command(
         name = "jpm",
         mixinStandardHelpOptions = true,
-        version = "jpm 0.1",
+        versionProvider = Version.class,
         description = "Simple command line tool for managing Maven artifacts",
         subcommands = {Main.Copy.class, Main.Sync.class, Main.Install.class, Main.PrintPath.class})
 public class Main {
