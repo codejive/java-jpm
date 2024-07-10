@@ -40,6 +40,13 @@ public class Main {
         @Mixin QuietMixin quietMixin;
         @Mixin ArtifactsMixin artifactsMixin;
 
+        @Option(
+                names = {"-s", "--sync"},
+                description =
+                        "Makes sure the target directory will only contain the mentioned artifacts and their dependencies, possibly removing other files present in the directory",
+                defaultValue = "false")
+        private boolean sync;
+
         @Override
         public Integer call() throws Exception {
             SyncStats stats =
@@ -47,7 +54,7 @@ public class Main {
                             .directory(artifactsMixin.copyMixin.directory)
                             .noLinks(artifactsMixin.copyMixin.noLinks)
                             .build()
-                            .copy(artifactsMixin.artifactNames);
+                            .copy(artifactsMixin.artifactNames, sync);
             if (!quietMixin.quiet) {
                 printStats(stats);
             }
@@ -56,26 +63,36 @@ public class Main {
     }
 
     @Command(
-            name = "sync",
+            name = "search",
             aliases = {"s"},
             description =
-                    "Resolves one or more artifacts and copies them and all their dependencies to a target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned when running this command). "
-                            + "By default jpm will try to create symbolic links to conserve space.\n\n"
-                            + "Example:\n  jpm sync org.apache.httpcomponents:httpclient:4.5.14\n")
+                    "Finds and returns the names of those artifacts that match the given (partial) name.\n\n"
+                            + "Example:\n  jpm search httpclient\n")
     static class Sync implements Callable<Integer> {
         @Mixin QuietMixin quietMixin;
-        @Mixin ArtifactsMixin artifactsMixin;
+        @Mixin CopyMixin copyMixin;
+
+        @Option(
+                names = {"-m", "--max"},
+                description = "Maximum number of results to return",
+                defaultValue = "20")
+        private int max;
+
+        @Parameters(
+                paramLabel = "artifactPattern",
+                description = "Partial or full artifact name to search for.")
+        private String artifactPattern;
 
         @Override
         public Integer call() throws Exception {
-            SyncStats stats =
+            String[] artifactNames =
                     Jpm.builder()
-                            .directory(artifactsMixin.copyMixin.directory)
-                            .noLinks(artifactsMixin.copyMixin.noLinks)
+                            .directory(copyMixin.directory)
+                            .noLinks(copyMixin.noLinks)
                             .build()
-                            .sync(artifactsMixin.artifactNames);
-            if (!quietMixin.quiet) {
-                printStats(stats);
+                            .search(artifactPattern, Math.min(max, 200));
+            if (artifactNames.length > 0) {
+                Arrays.stream(artifactNames).forEach(System.out::println);
             }
             return 0;
         }

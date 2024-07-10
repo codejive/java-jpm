@@ -6,7 +6,9 @@ import java.util.*;
 import org.codejive.jpm.json.AppInfo;
 import org.codejive.jpm.util.FileUtils;
 import org.codejive.jpm.util.ResolverUtils;
+import org.codejive.jpm.util.SearchUtils;
 import org.codejive.jpm.util.SyncStats;
+import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
 
 public class Jpm {
@@ -43,16 +45,25 @@ public class Jpm {
         }
     }
 
-    public SyncStats copy(String[] artifactNames)
+    public SyncStats copy(String[] artifactNames, boolean sync)
             throws IOException, DependencyResolutionException {
         List<Path> files = ResolverUtils.resolveArtifactPaths(artifactNames);
-        return FileUtils.syncArtifacts(files, directory, noLinks, true);
+        return FileUtils.syncArtifacts(files, directory, noLinks, !sync);
     }
 
-    public SyncStats sync(String[] artifactNames)
-            throws IOException, DependencyResolutionException {
-        List<Path> files = ResolverUtils.resolveArtifactPaths(artifactNames);
-        return FileUtils.syncArtifacts(files, directory, noLinks, false);
+    public String[] search(String artifactPattern, int count) throws IOException {
+        List<Artifact> artifacts = new ArrayList<>();
+        int max = count <= 0 || count > 200 ? 200 : count;
+        SearchUtils.SearchResult result = SearchUtils.findArtifacts(artifactPattern, max);
+        while (result != null) {
+            artifacts.addAll(result.artifacts);
+            result = count <= 0 ? SearchUtils.findNextArtifacts(result) : null;
+        }
+        return artifacts.stream().map(Jpm::artifactGav).toArray(String[]::new);
+    }
+
+    private static String artifactGav(Artifact artifact) {
+        return artifact.getGroupId() + ":" + artifact.getArtifactId() + ":" + artifact.getVersion();
     }
 
     public SyncStats install(String[] artifactNames)
