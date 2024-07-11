@@ -2,6 +2,7 @@
 //DEPS eu.maveniverse.maven.mima:context:2.4.15 eu.maveniverse.maven.mima.runtime:standalone-static:2.4.15
 //DEPS info.picocli:picocli:4.7.6
 //DEPS com.google.code.gson:gson:2.11.0
+//DEPS org.jline:jline-console-ui:3.26.2 org.jline:jline-terminal-jni:3.26.2
 //DEPS org.slf4j:slf4j-api:2.0.13 org.slf4j:slf4j-simple:2.0.13
 //SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/ResolverUtils.java util/SearchUtils.java
 //SOURCES util/SearchResult.java util/SyncStats.java util/Version.java
@@ -16,6 +17,13 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.codejive.jpm.util.SyncStats;
 import org.codejive.jpm.util.Version;
+import org.jline.consoleui.prompt.ConsolePrompt;
+import org.jline.consoleui.prompt.ListResult;
+import org.jline.consoleui.prompt.PromptResultItemIF;
+import org.jline.consoleui.prompt.builder.ListPromptBuilder;
+import org.jline.consoleui.prompt.builder.PromptBuilder;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -75,6 +83,12 @@ public class Main {
         @Mixin CopyMixin copyMixin;
 
         @Option(
+                names = {"-i", "--interactive"},
+                description = "Interactively search and select artifacts to install",
+                defaultValue = "false")
+        private boolean interactive;
+
+        @Option(
                 names = {"-m", "--max"},
                 description = "Maximum number of results to return",
                 defaultValue = "20")
@@ -82,21 +96,134 @@ public class Main {
 
         @Parameters(
                 paramLabel = "artifactPattern",
-                description = "Partial or full artifact name to search for.")
+                description = "Partial or full artifact name to search for.",
+                defaultValue = "")
         private String artifactPattern;
 
         @Override
         public Integer call() throws Exception {
-            String[] artifactNames =
-                    Jpm.builder()
-                            .directory(copyMixin.directory)
-                            .noLinks(copyMixin.noLinks)
-                            .build()
-                            .search(artifactPattern, Math.min(max, 200));
-            if (artifactNames.length > 0) {
-                Arrays.stream(artifactNames).forEach(System.out::println);
+            if (interactive || artifactPattern == null || artifactPattern.isEmpty()) {
+                try (Terminal terminal = TerminalBuilder.builder().build()) {
+                    while (true) {
+                        ConsolePrompt prompt = new ConsolePrompt(terminal);
+                        if (artifactPattern == null || artifactPattern.isEmpty()) {
+                            artifactPattern = askString(prompt, "Search for:");
+                        }
+                        String[] artifactNames = search(artifactPattern);
+                        PromptBuilder promptBuilder = prompt.getPromptBuilder();
+                        addSelectItem(promptBuilder, "Select artifact:", artifactNames);
+                        addSelectArtifactAction(promptBuilder);
+                        Map<String, PromptResultItemIF> result =
+                                prompt.prompt(promptBuilder.build());
+                        String selectedArtifact = getSelectedId(result, "item");
+                        String artifactAction = getSelectedId(result, "action");
+                        if ("install".equals(artifactAction)) {
+                            SyncStats stats =
+                                    Jpm.builder()
+                                            .directory(copyMixin.directory)
+                                            .noLinks(copyMixin.noLinks)
+                                            .build()
+                                            .install(new String[] {selectedArtifact});
+                            if (!quietMixin.quiet) {
+                                printStats(stats);
+                            }
+                        } else if ("copy".equals(artifactAction)) {
+                            SyncStats stats =
+                                    Jpm.builder()
+                                            .directory(copyMixin.directory)
+                                            .noLinks(copyMixin.noLinks)
+                                            .build()
+                                            .copy(new String[] {selectedArtifact}, false);
+                            if (!quietMixin.quiet) {
+                                printStats(stats);
+                            }
+                        } else if ("version".equals(artifactAction)) {
+                            artifactPattern = selectedArtifact;
+                            continue;
+                        } else { // quit
+                            break;
+                        }
+                        String finalAction = selectFinalAction(prompt);
+                        if ("quit".equals(finalAction)) {
+                            break;
+                        }
+                        artifactPattern = null;
+                    }
+                }
+            } else {
+                String[] artifactNames = search(artifactPattern);
+                if (artifactNames.length > 0) {
+                    Arrays.stream(artifactNames).forEach(System.out::println);
+                }
             }
             return 0;
+        }
+
+        String[] search(String artifactPattern) throws IOException {
+            return Jpm.builder()
+                    .directory(copyMixin.directory)
+                    .noLinks(copyMixin.noLinks)
+                    .build()
+                    .search(artifactPattern, Math.min(max, 200));
+        }
+
+        String askString(ConsolePrompt prompt, String message) throws IOException {
+            PromptBuilder promptBuilder = prompt.getPromptBuilder();
+            promptBuilder.createInputPrompt().name("input").message(message).addPrompt();
+            Map<String, PromptResultItemIF> result = prompt.prompt(promptBuilder.build());
+            return result.get("input").getResult();
+        }
+
+        void addSelectItem(PromptBuilder promptBuilder, String message, String[] items)
+                throws IOException {
+            ListPromptBuilder artifactsList =
+                    promptBuilder.createListPrompt().name("item").message(message).pageSize(10);
+            for (String artifactName : items) {
+                artifactsList.newItem(artifactName).text(artifactName).add();
+            }
+            artifactsList.addPrompt();
+        }
+
+        void addSelectArtifactAction(PromptBuilder promptBuilder) throws IOException {
+            promptBuilder
+                    .createListPrompt()
+                    .name("action")
+                    .message("What to do:")
+                    .newItem("install")
+                    .text("Install artifact")
+                    .add()
+                    .newItem("copy")
+                    .text("Copy artifact")
+                    .add()
+                    .newItem("version")
+                    .text("Select different version")
+                    .add()
+                    .newItem("quit")
+                    .text("Quit")
+                    .add()
+                    .addPrompt();
+        }
+
+        String selectFinalAction(ConsolePrompt prompt) throws IOException {
+            PromptBuilder promptBuilder = prompt.getPromptBuilder();
+            promptBuilder
+                    .createListPrompt()
+                    .name("action")
+                    .message("What to do:")
+                    .newItem("again")
+                    .text("Search again")
+                    .add()
+                    .newItem("quit")
+                    .text("Quit")
+                    .add()
+                    .addPrompt();
+            Map<String, PromptResultItemIF> result = prompt.prompt(promptBuilder.build());
+            return getSelectedId(result, "action");
+        }
+
+        private static String getSelectedId(
+                Map<String, PromptResultItemIF> result, String itemName) {
+            return ((ListResult) result.get(itemName)).getSelectedId();
         }
     }
 
