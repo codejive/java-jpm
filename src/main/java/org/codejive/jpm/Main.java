@@ -3,7 +3,8 @@
 //DEPS info.picocli:picocli:4.7.6
 //DEPS com.google.code.gson:gson:2.11.0
 //DEPS org.slf4j:slf4j-api:2.0.13 org.slf4j:slf4j-simple:2.0.13
-//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/ResolverUtils.java util/SyncStats.java
+//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/ResolverUtils.java util/SearchUtils.java
+//SOURCES util/SearchResult.java util/SyncStats.java util/Version.java
 // spotless:on
 
 package org.codejive.jpm;
