@@ -16,7 +16,7 @@ import java.util.TreeMap;
  * from/to files.
  */
 public class AppInfo {
-    private Map<String, Object> json;
+    private Map<String, Object> json = new TreeMap<>();
     public Map<String, String> dependencies = new TreeMap<>();
 
     /** The official name of the app.json file. */
