@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URLEncoder;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -55,18 +56,19 @@ public class SearchUtils {
         String finalQuery;
         if (parts.length >= 3) {
             // Exact group/artifact match for retrieving versions
-            finalQuery = "g:%s AND a:%s".formatted(parts[0], parts[1]);
+            finalQuery = String.format("g:%s AND a:%s", parts[0], parts[1]);
         } else if (parts.length == 2) {
             // Partial group/artifact match, we will filter the results
             // to remove those that match an inverted artifact/group
-            finalQuery = "%s AND %s".formatted(parts[0], parts[1]);
+            finalQuery = String.format("%s AND %s", parts[0], parts[1]);
         } else {
             // Simple partial match
             finalQuery = query;
         }
         String searchUrl =
-                "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=%s"
-                        .formatted(start, count, URLEncoder.encode(finalQuery, "UTF-8"));
+                String.format(
+                        "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=%s",
+                        start, count, URLEncoder.encode(finalQuery, "UTF-8"));
         if (parts.length >= 3) {
             searchUrl += "&core=gav";
         }
@@ -100,7 +102,7 @@ public class SearchUtils {
                                                         d.a,
                                                         "",
                                                         d.v != null ? d.v : d.latestVersion))
-                                .toList();
+                                .collect(Collectors.toList());
                 return new SearchResult(artifacts, query, start, count, result.response.numFound);
             }
         }

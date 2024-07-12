@@ -33,7 +33,9 @@ public class ResolverUtils {
             throws DependencyResolutionException {
         List<Artifact> artifacts = parseArtifacts(artifactNames);
         List<ArtifactResult> resolvedArtifacts = resolveArtifacts(artifacts);
-        return resolvedArtifacts.stream().map(ar -> ar.getArtifact().getFile().toPath()).toList();
+        return resolvedArtifacts.stream()
+                .map(ar -> ar.getArtifact().getFile().toPath())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -57,7 +59,9 @@ public class ResolverUtils {
     public static List<ArtifactResult> resolveArtifacts(List<Artifact> artifacts)
             throws DependencyResolutionException {
         List<Dependency> dependencies =
-                artifacts.stream().map(a -> new Dependency(a, JavaScopes.RUNTIME)).toList();
+                artifacts.stream()
+                        .map(a -> new Dependency(a, JavaScopes.RUNTIME))
+                        .collect(Collectors.toList());
         ContextOverrides overrides = ContextOverrides.create().build();
         Runtime runtime = Runtimes.INSTANCE.getRuntime();
         try (Context context = runtime.create(overrides)) {
