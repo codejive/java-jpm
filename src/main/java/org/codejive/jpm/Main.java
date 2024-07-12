@@ -90,9 +90,8 @@ public class Main {
 
         @Option(
                 names = {"-m", "--max"},
-                description = "Maximum number of results to return",
-                defaultValue = "20")
-        private int max;
+                description = "Maximum number of results to return")
+        private Integer max;
 
         @Parameters(
                 paramLabel = "artifactPattern",
@@ -103,6 +102,9 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             if (interactive || artifactPattern == null || artifactPattern.isEmpty()) {
+                if (max == null) {
+                    max = 100;
+                }
                 try (Terminal terminal = TerminalBuilder.builder().build()) {
                     while (true) {
                         ConsolePrompt prompt = new ConsolePrompt(terminal);
@@ -151,6 +153,9 @@ public class Main {
                     }
                 }
             } else {
+                if (max == null) {
+                    max = 20;
+                }
                 String[] artifactNames = search(artifactPattern);
                 if (artifactNames.length > 0) {
                     Arrays.stream(artifactNames).forEach(System.out::println);
