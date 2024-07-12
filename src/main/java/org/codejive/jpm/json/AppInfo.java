@@ -7,6 +7,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -40,7 +41,7 @@ public class AppInfo {
      * @throws IOException if an error occurred while reading or parsing the file
      */
     public static AppInfo read() throws IOException {
-        Path prjJson = Path.of(APP_INFO_FILE);
+        Path prjJson = Paths.get(APP_INFO_FILE);
         AppInfo appInfo = new AppInfo();
         if (Files.isRegularFile(prjJson)) {
             try (Reader in = Files.newBufferedReader(prjJson)) {
@@ -65,7 +66,7 @@ public class AppInfo {
      * @throws IOException if an error occurred while writing the file
      */
     public static void write(AppInfo appInfo) throws IOException {
-        Path prjJson = Path.of(APP_INFO_FILE);
+        Path prjJson = Paths.get(APP_INFO_FILE);
         try (Writer out = Files.newBufferedWriter(prjJson)) {
             Gson parser = new GsonBuilder().setPrettyPrinting().create();
             // WARNING awful code ahead
