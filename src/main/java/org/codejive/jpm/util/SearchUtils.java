@@ -67,7 +67,7 @@ public class SearchUtils {
         }
         String searchUrl =
                 String.format(
-                        "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=%s",
+                        "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=p:jar+AND+%s",
                         start, count, URLEncoder.encode(finalQuery, "UTF-8"));
         if (parts.length >= 3) {
             searchUrl += "&core=gav";
@@ -90,22 +90,22 @@ public class SearchUtils {
                 }
                 List<DefaultArtifact> artifacts =
                         result.response.docs.stream()
-                                .filter(
-                                        d ->
-                                                parts.length != 2
-                                                        || d.g.contains(parts[0])
-                                                                && d.a.contains(parts[1]))
-                                .map(
-                                        d ->
-                                                new DefaultArtifact(
-                                                        d.g,
-                                                        d.a,
-                                                        "",
-                                                        d.v != null ? d.v : d.latestVersion))
+                                .filter(d -> acceptDoc(d, parts))
+                                .map(SearchUtils::toArtifact)
                                 .collect(Collectors.toList());
                 return new SearchResult(artifacts, query, start, count, result.response.numFound);
             }
         }
+    }
+
+    private static boolean acceptDoc(MsrDoc d, String[] parts) {
+        return d.ec != null
+                && d.ec.contains(".jar")
+                && (parts.length != 2 || d.g.contains(parts[0]) && d.a.contains(parts[1]));
+    }
+
+    private static DefaultArtifact toArtifact(MsrDoc d) {
+        return new DefaultArtifact(d.g, d.a, "", d.v != null ? d.v : d.latestVersion);
     }
 }
 
@@ -129,4 +129,6 @@ class MsrDoc {
     public String a;
     public String v;
     public String latestVersion;
+    public String p;
+    public List<String> ec;
 }
