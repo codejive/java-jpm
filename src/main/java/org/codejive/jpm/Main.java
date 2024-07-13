@@ -68,7 +68,7 @@ public class Main {
             if (!quietMixin.quiet) {
                 printStats(stats);
             }
-            return 0;
+            return (Integer) 0;
         }
     }
 
@@ -103,7 +103,7 @@ public class Main {
         public Integer call() throws Exception {
             if (interactive || artifactPattern == null || artifactPattern.isEmpty()) {
                 if (max == null) {
-                    max = 100;
+                    max = (Integer) 100;
                 }
                 try (Terminal terminal = TerminalBuilder.builder().build()) {
                     while (true) {
@@ -154,14 +154,14 @@ public class Main {
                 }
             } else {
                 if (max == null) {
-                    max = 20;
+                    max = (Integer) 20;
                 }
                 String[] artifactNames = search(artifactPattern);
                 if (artifactNames.length > 0) {
                     Arrays.stream(artifactNames).forEach(System.out::println);
                 }
             }
-            return 0;
+            return (Integer) 0;
         }
 
         String[] search(String artifactPattern) throws IOException {
@@ -255,7 +255,7 @@ public class Main {
             if (!quietMixin.quiet) {
                 printStats(stats);
             }
-            return 0;
+            return (Integer) 0;
         }
     }
 
@@ -284,7 +284,7 @@ public class Main {
                                 .collect(Collectors.joining(File.pathSeparator));
                 System.out.print(classpath);
             }
-            return 0;
+            return (Integer) 0;
         }
     }
 
@@ -333,9 +333,8 @@ public class Main {
     }
 
     private static void printStats(SyncStats stats) {
-        System.err.printf(
-                "Artifacts new: %d, updated: %d, deleted: %d%n",
-                stats.copied, stats.updated, stats.deleted);
+        System.err.printf("Artifacts new: %d, updated: %d, deleted: %d%n",
+                (Integer)stats.copied, (Integer)stats.updated, (Integer)stats.deleted);
     }
 
     /**
