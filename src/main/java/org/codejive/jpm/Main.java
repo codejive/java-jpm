@@ -36,7 +36,12 @@ import picocli.CommandLine.Parameters;
         mixinStandardHelpOptions = true,
         versionProvider = Version.class,
         description = "Simple command line tool for managing Maven artifacts",
-        subcommands = {Main.Copy.class, Main.Sync.class, Main.Install.class, Main.PrintPath.class})
+        subcommands = {
+            Main.Copy.class,
+            Main.Search.class,
+            Main.Install.class,
+            Main.PrintPath.class
+        })
 public class Main {
 
     @Command(
@@ -78,7 +83,7 @@ public class Main {
             description =
                     "Finds and returns the names of those artifacts that match the given (partial) name.\n\n"
                             + "Example:\n  jpm search httpclient\n")
-    static class Sync implements Callable<Integer> {
+    static class Search implements Callable<Integer> {
         @Mixin QuietMixin quietMixin;
         @Mixin CopyMixin copyMixin;
 
