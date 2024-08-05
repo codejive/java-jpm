@@ -338,8 +338,9 @@ public class Main {
     }
 
     private static void printStats(SyncStats stats) {
-        System.err.printf("Artifacts new: %d, updated: %d, deleted: %d%n",
-                (Integer)stats.copied, (Integer)stats.updated, (Integer)stats.deleted);
+        System.err.printf(
+                "Artifacts new: %d, updated: %d, deleted: %d%n",
+                (Integer) stats.copied, (Integer) stats.updated, (Integer) stats.deleted);
     }
 
     /**
