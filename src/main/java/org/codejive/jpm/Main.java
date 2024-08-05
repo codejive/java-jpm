@@ -348,6 +348,11 @@ public class Main {
      * @param args The command line arguments.
      */
     public static void main(String... args) {
+        if (args.length == 0) {
+            System.err.println(
+                    "Running 'jpm search --interactive', try 'jpm --help' for more options");
+            args = new String[] {"search", "--interactive"};
+        }
         new CommandLine(new Main()).execute(args);
     }
 }
