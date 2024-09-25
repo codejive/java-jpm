@@ -17,10 +17,15 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.codejive.jpm.util.SyncStats;
 import org.codejive.jpm.util.Version;
+import org.jline.consoleui.elements.InputValue;
+import org.jline.consoleui.elements.ListChoice;
+import org.jline.consoleui.elements.PageSizeType;
+import org.jline.consoleui.elements.PromptableElementIF;
+import org.jline.consoleui.elements.items.ListItemIF;
+import org.jline.consoleui.elements.items.impl.ListItem;
 import org.jline.consoleui.prompt.ConsolePrompt;
 import org.jline.consoleui.prompt.ListResult;
 import org.jline.consoleui.prompt.PromptResultItemIF;
-import org.jline.consoleui.prompt.builder.ListPromptBuilder;
 import org.jline.consoleui.prompt.builder.PromptBuilder;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -81,7 +86,10 @@ public class Main {
             name = "search",
             aliases = {"s"},
             description =
-                    "Finds and returns the names of those artifacts that match the given (partial) name.\n\n"
+                    "Without arguments this command will start an interactive search asking the user to "
+                            + "provide details of the artifact to look for and the actions to take. When provided "
+                            + "with an argument this command finds and returns the names of those artifacts that "
+                            + "match the given (partial) name.\n\n"
                             + "Example:\n  jpm search httpclient\n")
     static class Search implements Callable<Integer> {
         @Mixin QuietMixin quietMixin;
@@ -112,16 +120,13 @@ public class Main {
                 }
                 try (Terminal terminal = TerminalBuilder.builder().build()) {
                     while (true) {
-                        ConsolePrompt prompt = new ConsolePrompt(terminal);
-                        if (artifactPattern == null || artifactPattern.isEmpty()) {
-                            artifactPattern = askString(prompt, "Search for:");
+                        ConsolePrompt.UiConfig cfg = new ConsolePrompt.UiConfig();
+                        cfg.setCancellableFirstPrompt(true);
+                        ConsolePrompt prompt = new ConsolePrompt(null, terminal, cfg);
+                        Map<String, PromptResultItemIF> result = prompt.prompt(this::nextQuestion);
+                        if (result.isEmpty()) {
+                            break;
                         }
-                        String[] artifactNames = search(artifactPattern);
-                        PromptBuilder promptBuilder = prompt.getPromptBuilder();
-                        addSelectItem(promptBuilder, "Select artifact:", artifactNames);
-                        addSelectArtifactAction(promptBuilder);
-                        Map<String, PromptResultItemIF> result =
-                                prompt.prompt(promptBuilder.build());
                         String selectedArtifact = getSelectedId(result, "item");
                         String artifactAction = getSelectedId(result, "action");
                         if ("install".equals(artifactAction)) {
@@ -144,9 +149,6 @@ public class Main {
                             if (!quietMixin.quiet) {
                                 printStats(stats);
                             }
-                        } else if ("version".equals(artifactAction)) {
-                            artifactPattern = selectedArtifact;
-                            continue;
                         } else { // quit
                             break;
                         }
@@ -169,49 +171,65 @@ public class Main {
             return (Integer) 0;
         }
 
-        String[] search(String artifactPattern) throws IOException {
-            return Jpm.builder()
-                    .directory(copyMixin.directory)
-                    .noLinks(copyMixin.noLinks)
-                    .build()
-                    .search(artifactPattern, Math.min(max, 200));
-        }
-
-        String askString(ConsolePrompt prompt, String message) throws IOException {
-            PromptBuilder promptBuilder = prompt.getPromptBuilder();
-            promptBuilder.createInputPrompt().name("input").message(message).addPrompt();
-            Map<String, PromptResultItemIF> result = prompt.prompt(promptBuilder.build());
-            return result.get("input").getResult();
-        }
-
-        void addSelectItem(PromptBuilder promptBuilder, String message, String[] items)
-                throws IOException {
-            ListPromptBuilder artifactsList =
-                    promptBuilder.createListPrompt().name("item").message(message).pageSize(10);
-            for (String artifactName : items) {
-                artifactsList.newItem(artifactName).text(artifactName).add();
+        String[] search(String artifactPattern) {
+            try {
+                return Jpm.builder()
+                        .directory(copyMixin.directory)
+                        .noLinks(copyMixin.noLinks)
+                        .build()
+                        .search(artifactPattern, Math.min(max, 200));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
             }
-            artifactsList.addPrompt();
         }
 
-        void addSelectArtifactAction(PromptBuilder promptBuilder) throws IOException {
-            promptBuilder
-                    .createListPrompt()
-                    .name("action")
-                    .message("What to do:")
-                    .newItem("install")
-                    .text("Download & Install artifact")
-                    .add()
-                    .newItem("copy")
-                    .text("Download & Copy artifact")
-                    .add()
-                    .newItem("version")
-                    .text("Select different version")
-                    .add()
-                    .newItem("quit")
-                    .text("Quit")
-                    .add()
-                    .addPrompt();
+        List<PromptableElementIF> nextQuestion(Map<String, PromptResultItemIF> results) {
+            String pattern;
+            if (artifactPattern == null || artifactPattern.isEmpty()) {
+                if (!results.containsKey("input")) {
+                    return List.of(stringElement("Search for:"));
+                }
+                pattern = results.get("input").getResult();
+            } else {
+                pattern = artifactPattern;
+            }
+
+            if (!results.containsKey("item")) {
+                String[] artifactNames = search(pattern);
+                return List.of(selectElement("Select artifact:", artifactNames));
+            }
+
+            if (!results.containsKey("action")) {
+                return List.of(selectArtifactActionElement());
+            } else if ("version".equals(getSelectedId(results, "action"))) {
+                results.remove("action");
+                pattern = getSelectedId(results, "item");
+                String[] artifactNames = search(pattern);
+                return List.of(selectElement("Select version:", artifactNames));
+            }
+
+            return null;
+        }
+
+        InputValue stringElement(String message) {
+            return new InputValue("input", message);
+        }
+
+        ListChoice selectElement(String message, String[] items) {
+            List<ListItemIF> itemList =
+                    Arrays.stream(items)
+                            .map(it -> new ListItem(it, it))
+                            .collect(Collectors.toList());
+            return new ListChoice(message, "item", 10, PageSizeType.ABSOLUTE, itemList);
+        }
+
+        ListChoice selectArtifactActionElement() {
+            List<ListItemIF> itemList = new ArrayList<>();
+            itemList.add(new ListItem("Download & Install artifact", "install"));
+            itemList.add(new ListItem("Download & Copy artifact", "copy"));
+            itemList.add(new ListItem("Select different version", "version"));
+            itemList.add(new ListItem("Quit", "quit"));
+            return new ListChoice("What to do:", "action", 10, PageSizeType.ABSOLUTE, itemList);
         }
 
         String selectFinalAction(ConsolePrompt prompt) throws IOException {
@@ -219,7 +237,7 @@ public class Main {
             promptBuilder
                     .createListPrompt()
                     .name("action")
-                    .message("What to do:")
+                    .message("Next step:")
                     .newItem("again")
                     .text("Search again")
                     .add()
@@ -242,7 +260,7 @@ public class Main {
             aliases = {"i"},
             description =
                     "This adds the given artifacts to the list of dependencies available in the app.json file. "
-                            + "It then behaves just like 'sync' and copies all artifacts in that list and all their dependencies to the target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned in the app.json file)."
+                            + "It then behaves just like 'copy --sync' and copies all artifacts in that list and all their dependencies to the target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned in the app.json file). "
                             + "If no artifacts are passed the app.json file will be left untouched and only the existing dependencies in the file will be copied.\n\n"
                             + "Example:\n  jpm install org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Install implements Callable<Integer> {
