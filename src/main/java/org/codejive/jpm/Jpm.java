@@ -106,8 +106,8 @@ public class Jpm {
 
     /**
      * Installs the given artifacts to the target directory while also registering them as
-     * dependencies in the app.json file in the current directory. If no artifacts are given, all
-     * dependencies in the app.json file will be installed. NB: "installation" in this context
+     * dependencies in the app.yml file in the current directory. If no artifacts are given, all
+     * dependencies in the app.yml file will be installed. NB: "installation" in this context
      * basically means sync-copying the artifacts to the target directory.
      *
      * @param artifactNames The artifacts to install.
@@ -139,7 +139,7 @@ public class Jpm {
 
     /**
      * Returns the paths of the given artifacts. If no artifacts are given, the paths for all
-     * dependencies in the app.json file will be returned instead.
+     * dependencies in the app.yml file will be returned instead.
      *
      * @param artifactNames The artifacts to get the paths for.
      * @return A list of paths.

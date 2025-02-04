@@ -1,7 +1,5 @@
 package org.codejive.jpm.util;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,6 +11,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.eclipse.aether.artifact.DefaultArtifact;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.representer.Representer;
 
 /** Utility class for searching Maven artifacts. */
 public class SearchUtils {
@@ -81,10 +84,14 @@ public class SearchUtils {
         try (CloseableHttpClient httpClient = HttpClients.custom().setUserAgent(agent).build()) {
             HttpGet request = new HttpGet(searchUrl);
             try (CloseableHttpResponse response = httpClient.execute(request)) {
-                Gson gson = new GsonBuilder().create();
+                DumperOptions dopts = new DumperOptions();
+                Constructor cons = new Constructor(MvnSearchResult.class, new LoaderOptions());
+                Representer representer = new Representer(dopts);
+                representer.getPropertyUtils().setSkipMissingProperties(true);
+                Yaml yaml = new Yaml(cons, representer, dopts);
                 InputStream ins = response.getEntity().getContent();
                 InputStreamReader rdr = new InputStreamReader(ins);
-                MvnSearchResult result = gson.fromJson(rdr, MvnSearchResult.class);
+                MvnSearchResult result = yaml.load(rdr);
                 if (result.responseHeader.status != 0) {
                     throw new IOException("Search failed");
                 }

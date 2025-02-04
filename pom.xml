@@ -34,7 +34,7 @@
         <mainClass>org.codejive.jpm.Main</mainClass>
         <version.mima>2.4.15</version.mima>
         <version.picocli>4.7.6</version.picocli>
-        <version.gson>2.11.0</version.gson>
+        <version.snakeyaml>2.3</version.snakeyaml>
         <version.jline>3.29.0</version.jline>
         <version.slf4j>2.0.13</version.slf4j>
         <version.spotless>2.43.0</version.spotless>
@@ -58,9 +58,9 @@
             <version>${version.picocli}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${version.gson}</version>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${version.snakeyaml}</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>

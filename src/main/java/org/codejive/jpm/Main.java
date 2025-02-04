@@ -153,7 +153,7 @@ public class Main {
                             break;
                         }
                         String finalAction = selectFinalAction(prompt);
-                        if ("quit".equals(finalAction)) {
+                        if (!"again".equals(finalAction)) {
                             break;
                         }
                         artifactPattern = null;
@@ -238,11 +238,11 @@ public class Main {
                     .createListPrompt()
                     .name("action")
                     .message("Next step:")
-                    .newItem("again")
-                    .text("Search again")
-                    .add()
                     .newItem("quit")
                     .text("Quit")
+                    .add()
+                    .newItem("again")
+                    .text("Search again")
                     .add()
                     .addPrompt();
             Map<String, PromptResultItemIF> result = prompt.prompt(promptBuilder.build());
@@ -259,9 +259,9 @@ public class Main {
             name = "install",
             aliases = {"i"},
             description =
-                    "This adds the given artifacts to the list of dependencies available in the app.json file. "
-                            + "It then behaves just like 'copy --sync' and copies all artifacts in that list and all their dependencies to the target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned in the app.json file). "
-                            + "If no artifacts are passed the app.json file will be left untouched and only the existing dependencies in the file will be copied.\n\n"
+                    "This adds the given artifacts to the list of dependencies available in the app.yml file. "
+                            + "It then behaves just like 'copy --sync' and copies all artifacts in that list and all their dependencies to the target directory while at the same time removing any artifacts that are no longer needed (ie the ones that are not mentioned in the app.yml file). "
+                            + "If no artifacts are passed the app.yml file will be left untouched and only the existing dependencies in the file will be copied.\n\n"
                             + "Example:\n  jpm install org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Install implements Callable<Integer> {
         @Mixin QuietMixin quietMixin;
@@ -287,7 +287,7 @@ public class Main {
             aliases = {"p"},
             description =
                     "Resolves one or more artifacts and prints the full classpath to standard output. "
-                            + "If no artifacts are passed the classpath for the dependencies defined in the app.json file will be printed instead.\n\n"
+                            + "If no artifacts are passed the classpath for the dependencies defined in the app.yml file will be printed instead.\n\n"
                             + "Example:\n  jpm path org.apache.httpcomponents:httpclient:4.5.14\n")
     static class PrintPath implements Callable<Integer> {
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;

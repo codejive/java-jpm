@@ -1,0 +1,10 @@
+dependencies:
+  eu.maveniverse.maven.mima:context: "2.4.15"
+  eu.maveniverse.maven.mima.runtime:standalone-static: "2.4.15"
+  info.picocli:picocli: "4.7.6"
+  org.yaml:snakeyaml: "2.3"
+  org.jline:jline-console-ui: "3.29.0"
+  org.jline:jline-terminal-jni: "3.29.0"
+  org.slf4j:slf4j-api: "2.0.13"
+  org.slf4j:slf4j-log4j12: "2.0.13"
+  org.slf4j:slf4j-simple: "2.0.13"

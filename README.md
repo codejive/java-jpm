@@ -59,7 +59,7 @@ Let's see what that did:
 ```shell
 $ tree
 .
-├── app.json
+├── app.yml
 ├── deps
 │   └── jfiglet-0.0.9.jar -> /home/user/.m2/repository/com/github/lalyos/jfiglet/0.0.9/jfiglet-0.0.9.jar
 └── HelloWorld.java
@@ -79,13 +79,13 @@ $ javac -cp deps/* HelloWorld.java
  |_| |_|\___|_|_|\___( )    \_/\_/ \___/|_|  |_|\__,_(_)
 ```
 
-But if we look again at the above output of `tree`, we also see an `app.json` file.
+But if we look again at the above output of `tree`, we also see an `app.yml` file.
 This file is used by `jpm` to keep track of the dependencies of your project. If you want to share your project
-with someone else, you can simply share the `app.json` file along with the code, and they can run `jpm install`
+with someone else, you can simply share the `app.yml` file along with the code, and they can run `jpm install`
 to get the required dependencies to run the code.
 
 _NB: We could have used `jpm copy` instead of `jpm install` to copy the dependencies but that would not have created
-the `app.json` file._
+the `app.yml` file._
 
 ### JBang
 
@@ -123,12 +123,12 @@ Commands:
                 jpm search httpclient
 
   install, i  This adds the given artifacts to the list of dependencies
-                available in the app.json file. It then behaves just like 'copy
+                available in the app.yml file. It then behaves just like 'copy
                 --sync' and copies all artifacts in that list and all their
                 dependencies to the target directory while at the same time
                 removing any artifacts that are no longer needed (ie the ones
-                that are not mentioned in the app.json file). If no artifacts
-                are passed the app.json file will be left untouched and only
+                that are not mentioned in the app.yml file). If no artifacts
+                are passed the app.yml file will be left untouched and only
                 the existing dependencies in the file will be copied.
 
               Example:
@@ -136,7 +136,7 @@ Commands:
 
   path, p     Resolves one or more artifacts and prints the full classpath to
                 standard output. If no artifacts are passed the classpath for
-                the dependencies defined in the app.json file will be printed
+                the dependencies defined in the app.yml file will be printed
                 instead.
 
               Example:
