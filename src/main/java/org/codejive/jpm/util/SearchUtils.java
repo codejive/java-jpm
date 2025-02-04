@@ -67,7 +67,7 @@ public class SearchUtils {
         }
         String searchUrl =
                 String.format(
-                        "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=p:jar+AND+%s",
+                        "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=%s",
                         start, count, URLEncoder.encode(finalQuery, "UTF-8"));
         if (parts.length >= 3) {
             searchUrl += "&core=gav";
