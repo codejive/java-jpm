@@ -14,7 +14,7 @@ run Java code directly without making their lives difficult the moment they want
 ```shell
 $ jpm install com.github.lalyos:jfiglet:0.0.9
 Artifacts new: 1, updated: 0, deleted: 0
-$ javac -cp deps/* HelloWorld.java
+$ java -cp deps/* HelloWorld.java
   _   _      _ _         __        __         _     _ _
  | | | | ___| | | ___    \ \      / /__  _ __| | __| | |
  | |_| |/ _ \ | |/ _ \    \ \ /\ / / _ \| '__| |/ _` | |
@@ -71,7 +71,7 @@ As you can see `jpm` has created a `deps` directory and copied the JFigletFont l
 We can now simply run the program like this (using Java 11 or newer):
 
 ```shell
-$ javac -cp deps/* HelloWorld.java
+$ java -cp deps/* HelloWorld.java
   _   _      _ _         __        __         _     _ _
  | | | | ___| | | ___    \ \      / /__  _ __| | __| | |
  | |_| |/ _ \ | |/ _ \    \ \ /\ / / _ \| '__| |/ _` | |
