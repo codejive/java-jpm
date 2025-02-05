@@ -89,13 +89,15 @@ to get the required dependencies to run the code.
 _NB: We could have used `jpm copy` instead of `jpm install` to copy the dependencies but that would not have created
 the `app.yml` file._
 
-### JBang
+## Installation
 
-For now the simplest way to install `jpm` is to use [JBang](jbang.dev):
+For now the simplest way to install `jpm` is to use [JBang](https://www.jbang.dev/download/):
 
 ```shell
 jbang app install jpm@codejive
 ```
+
+But you can also simply download and unzip the [release package](https://github.com/codejive/java-jpm/releases/latest) and run the `bin/jpm` script.
 
 ## Usage
 
