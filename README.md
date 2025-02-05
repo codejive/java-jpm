@@ -7,6 +7,8 @@ It takes inspiration from Node's npm but is more focused on managing dependencie
 is _not_ a build tool. Keep using Maven and Gradle for that. This tool is ideal for those who want to compile and
 run Java code directly without making their lives difficult the moment they want to start using dependencies.
 
+[![asciicast](https://asciinema.org/a/ZqmYDG93jSJxQH8zaFRe7ilG0.svg)](https://asciinema.org/a/ZqmYDG93jSJxQH8zaFRe7ilG0)
+
 ## Example
 
 **TL;DR**
