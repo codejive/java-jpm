@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.codejive.jpm</groupId>
     <artifactId>jpm</artifactId>
-    <version>0.4.1-SNAPSHOT</version>
+    <version>0.4.1</version>
 
     <name>Java Package Manager</name>
     <description>A simple command line tool for managing Maven dependencies for Java tools like javac and java</description>
