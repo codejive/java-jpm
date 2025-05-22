@@ -17,11 +17,12 @@ project:
   license: Apache-2.0
   links:
     homepage: https://github.com/codejive/java-jpm
-  java:
-    groupId: org.codejive.jpm
-    version: 8
-    mainClass: org.codejive.jpm.Main
-  inceptionYear: 2024
+  languages:
+    java:
+      groupId: org.codejive.jpm
+      version: '8'
+      mainClass: org.codejive.jpm.Main
+  inceptionYear: '2024'
   stereotype: CLI
 
 assemble:
@@ -40,7 +41,7 @@ assemble:
     jpm-native:
       active: NEVER
       java:
-        version: 22
+        version: '22'
       imageName: '{{distributionName}}-{{projectEffectiveVersion}}'
       executable: jpm
       mainJar:
@@ -60,12 +61,10 @@ assemble:
 
 deploy:
   maven:
-    nexus2:
-      maven-central:
+    mavenCentral:
+      jpm:
         active: RELEASE
-        url: https://s01.oss.sonatype.org/service/local
-        closeRepository: true
-        releaseRepository: true
+        url: https://central.sonatype.com/api/v1/publisher
         stagingRepositories:
           - target/staging-deploy
 
