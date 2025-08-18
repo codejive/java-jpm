@@ -73,7 +73,7 @@ As you can see `jpm` has created a `deps` directory and copied the JFigletFont l
 We can now simply run the program like this (using Java 11 or newer):
 
 ```shell
-$ java -cp deps/* HelloWorld.java
+$ java -cp "deps/*" HelloWorld.java
   _   _      _ _         __        __         _     _ _
  | | | | ___| | | ___    \ \      / /__  _ __| | __| | |
  | |_| |/ _ \ | |/ _ \    \ \ /\ / / _ \| '__| |/ _` | |
