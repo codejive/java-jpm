@@ -91,7 +91,7 @@ public class Jpm {
      */
     public SyncStats copy(String[] artifactNames, boolean sync)
             throws IOException, DependencyResolutionException {
-        List<Path> files = ResolverUtils.resolveArtifactPaths(artifactNames);
+        List<Path> files = Resolver.create(artifactNames).resolvePaths();
         return FileUtils.syncArtifacts(files, directory, noLinks, !sync);
     }
 
@@ -134,7 +134,7 @@ public class Jpm {
         AppInfo appInfo = AppInfo.read();
         String[] artifacts = getArtifacts(artifactNames, appInfo);
         if (artifacts.length > 0) {
-            List<Path> files = ResolverUtils.resolveArtifactPaths(artifacts);
+            List<Path> files = Resolver.create(artifacts).resolvePaths();
             SyncStats stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
             if (artifactNames.length > 0) {
                 for (String dep : artifactNames) {
@@ -165,7 +165,7 @@ public class Jpm {
         AppInfo appInfo = AppInfo.read();
         String[] deps = getArtifacts(artifactNames, appInfo);
         if (deps.length > 0) {
-            return ResolverUtils.resolveArtifactPaths(deps);
+            return Resolver.create(deps).resolvePaths();
         } else {
             return Collections.emptyList();
         }

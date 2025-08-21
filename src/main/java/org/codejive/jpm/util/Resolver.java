@@ -4,10 +4,6 @@ import eu.maveniverse.maven.mima.context.Context;
 import eu.maveniverse.maven.mima.context.ContextOverrides;
 import eu.maveniverse.maven.mima.context.Runtime;
 import eu.maveniverse.maven.mima.context.Runtimes;
-import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.eclipse.aether.collection.CollectRequest;
@@ -18,22 +14,34 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 import org.eclipse.aether.resolution.DependencyResult;
 import org.eclipse.aether.util.artifact.JavaScopes;
 
-/** Utility class for resolving Maven artifacts. */
-public class ResolverUtils {
-    /**
-     * Resolves the paths of the given artifacts. Handles parsing and resolving of artifacts and
-     * extracts their paths.
-     *
-     * @param artifactNames the artifacts to resolve as an array of strings in the format
-     *     "groupId:artifactId:version"
-     * @return the paths of the resolved artifacts
-     * @throws DependencyResolutionException if an error occurs while resolving the artifacts
-     */
-    public static List<Path> resolveArtifactPaths(String[] artifactNames)
-            throws DependencyResolutionException {
-        List<Artifact> artifacts = parseArtifacts(artifactNames);
-        List<ArtifactResult> resolvedArtifacts = resolveArtifacts(artifacts);
-        return resolvedArtifacts.stream()
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class Resolver {
+    private final List<Artifact> artifacts;
+
+    private List<ArtifactResult> resolvedArtifacts;
+
+    public static Resolver create(String[] artifactNames) {
+        return new Resolver(artifactNames);
+    }
+
+    private Resolver(String[] artifactNames) {
+        artifacts = parseArtifacts(artifactNames);
+    }
+
+    public List<ArtifactResult> resolve() throws DependencyResolutionException {
+        if (resolvedArtifacts == null) {
+            resolvedArtifacts = resolveArtifacts(artifacts);
+        }
+        return resolvedArtifacts;
+    }
+
+    public List<Path> resolvePaths() throws DependencyResolutionException {
+        List<ArtifactResult> ras = resolve();
+        return ras.stream()
                 .map(ar -> ar.getArtifact().getFile().toPath())
                 .collect(Collectors.toList());
     }

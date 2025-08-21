@@ -1,10 +1,10 @@
 // spotless:off Dependencies for JBang
-//DEPS eu.maveniverse.maven.mima:context:2.4.15 eu.maveniverse.maven.mima.runtime:standalone-static:2.4.15
-//DEPS info.picocli:picocli:4.7.6
-//DEPS org.yaml:snakeyaml:2.3
-//DEPS org.jline:jline-console-ui:3.29.0 org.jline:jline-terminal-jni:3.29.0
-//DEPS org.slf4j:slf4j-api:2.0.13 org.slf4j:slf4j-simple:2.0.13
-//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/ResolverUtils.java util/ScriptUtils.java
+//DEPS eu.maveniverse.maven.mima:context:2.4.34 eu.maveniverse.maven.mima.runtime:standalone-static:2.4.34
+//DEPS info.picocli:picocli:4.7.7
+//DEPS org.yaml:snakeyaml:2.4
+//DEPS org.jline:jline-console-ui:3.30.5 org.jline:jline-terminal-jni:3.30.5
+//DEPS org.slf4j:slf4j-api:2.0.17 org.slf4j:slf4j-simple:2.0.17
+//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/Resolver.java util/ScriptUtils.java
 //SOURCES util/SearchResult.java util/SearchUtils.java util/SyncStats.java util/Version.java
 // spotless:on
 
