@@ -60,15 +60,17 @@ public class AppInfo {
      * @throws IOException if an error occurred while reading or parsing the file
      */
     public static AppInfo read() throws IOException {
-        Path prjJson = Paths.get(APP_INFO_FILE);
+        Path prjJson = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
         AppInfo appInfo = new AppInfo();
         if (Files.isRegularFile(prjJson)) {
             try (Reader in = Files.newBufferedReader(prjJson)) {
                 Yaml yaml = new Yaml();
                 appInfo.yaml = yaml.load(in);
             }
-        } else {
-            appInfo = new AppInfo();
+        }
+        // Ensure yaml is never null
+        if (appInfo.yaml == null) {
+            appInfo.yaml = new TreeMap<>();
         }
         // WARNING awful code ahead
         if (appInfo.yaml.containsKey("dependencies")
@@ -95,7 +97,7 @@ public class AppInfo {
      * @throws IOException if an error occurred while writing the file
      */
     public static void write(AppInfo appInfo) throws IOException {
-        Path prjJson = Paths.get(APP_INFO_FILE);
+        Path prjJson = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
         try (Writer out = Files.newBufferedWriter(prjJson)) {
             DumperOptions dopts = new DumperOptions();
             dopts.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);

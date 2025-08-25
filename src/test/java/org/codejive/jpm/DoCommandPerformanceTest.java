@@ -75,7 +75,8 @@ class DoCommandPerformanceTest {
                     () ->
                             ScriptUtils.executeScript(
                                     eq("echo Simple action without classpath"),
-                                    eq(Collections.emptyList())));
+                                    eq(Collections.emptyList())),
+                    times(1));
         }
     }
 
@@ -98,7 +99,8 @@ class DoCommandPerformanceTest {
 
             // Test exact match - should resolve classpath
             cmd.execute("do", "exact");
-            mockedScriptUtils.verify(() -> ScriptUtils.executeScript(contains("${deps}"), any()));
+            mockedScriptUtils.verify(
+                    () -> ScriptUtils.executeScript(contains("${deps}"), any()), times(1));
 
             mockedScriptUtils.clearInvocations();
 
@@ -107,7 +109,8 @@ class DoCommandPerformanceTest {
             mockedScriptUtils.verify(
                     () ->
                             ScriptUtils.executeScript(
-                                    eq("java -cp ${DEPS} MainClass"), eq(Collections.emptyList())));
+                                    eq("java -cp ${DEPS} MainClass"), eq(Collections.emptyList())),
+                    times(1));
 
             mockedScriptUtils.clearInvocations();
 
@@ -116,7 +119,8 @@ class DoCommandPerformanceTest {
             mockedScriptUtils.verify(
                     () ->
                             ScriptUtils.executeScript(
-                                    eq("java -cp mydeps MainClass"), eq(Collections.emptyList())));
+                                    eq("java -cp mydeps MainClass"), eq(Collections.emptyList())),
+                    times(1));
         }
     }
 

@@ -385,7 +385,12 @@ public class Main {
                 }
             }
 
-            return ScriptUtils.executeScript(command, classpath);
+            try {
+                return ScriptUtils.executeScript(command, classpath);
+            } catch (IOException | InterruptedException e) {
+                System.err.println("Error executing action: " + e.getMessage());
+                return 1;
+            }
         }
     }
 
