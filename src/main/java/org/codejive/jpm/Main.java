@@ -322,15 +322,41 @@ public class Main {
     static class Do implements Callable<Integer> {
         @Mixin CopyMixin copyMixin;
 
+        @Option(
+                names = {"-l", "--list"},
+                description = "List all available actions",
+                defaultValue = "false")
+        private boolean list;
+
         @Parameters(
                 paramLabel = "actionName",
                 description = "Name of the action to execute as defined in app.yml",
-                arity = "1")
+                arity = "0..1")
         private String actionName;
 
         @Override
         public Integer call() throws Exception {
             AppInfo appInfo = AppInfo.read();
+
+            // If --list flag is provided, list all available actions
+            if (list) {
+                if (appInfo.getActionNames().isEmpty()) {
+                    System.out.println("No actions defined in app.yml");
+                } else {
+                    System.out.println("Available actions:");
+                    for (String actionName : appInfo.getActionNames()) {
+                        System.out.println("  " + actionName);
+                    }
+                }
+                return 0;
+            }
+
+            // If no --list flag, actionName is required
+            if (actionName == null || actionName.trim().isEmpty()) {
+                System.err.println("Action name is required. Use --list to see available actions.");
+                return 1;
+            }
+
             String command = appInfo.getAction(actionName);
 
             if (command == null) {
