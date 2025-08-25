@@ -197,8 +197,11 @@ class MainIntegrationTest {
         int exitCode = cmd.execute("do", "simple");
         long endTime = System.currentTimeMillis();
 
-        // Should complete quickly (under 1 second for a simple echo)
-        assertTrue((endTime - startTime) < 1000, "Simple action should execute quickly");
+        // Be more lenient on Windows as file operations can be slower
+        // Allow up to 5 seconds on Windows, 1 second on other platforms
+        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+        long maxTime = isWindows ? 5000 : 1000;
+        assertTrue((endTime - startTime) < maxTime, "Simple action should execute quickly");
         assertTrue(exitCode >= 0);
     }
 

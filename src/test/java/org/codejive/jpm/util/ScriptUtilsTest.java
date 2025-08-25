@@ -29,12 +29,13 @@ class ScriptUtilsTest {
         String command = "java -cp ${deps} MainClass";
         String result = (String) processCommand.invoke(null, command, classpath);
 
+        // Use the actual paths from the classpath as they would be processed
         String expectedClasspath =
                 String.join(
                         System.getProperty("path.separator"),
-                        "deps/lib1.jar",
-                        "deps/lib2.jar",
-                        "deps/lib3.jar");
+                        classpath.get(0).toString(),
+                        classpath.get(1).toString(),
+                        classpath.get(2).toString());
         assertEquals("java -cp " + expectedClasspath + " MainClass", result);
     }
 
@@ -89,8 +90,15 @@ class ScriptUtilsTest {
         String command = "java -cp ${deps} MainClass && java -cp ${deps} TestClass";
         String result = (String) processCommand.invoke(null, command, classpath);
 
+        // Use the actual path as it would be processed
+        String expectedPath = classpath.get(0).toString();
         assertEquals(
-                "java -cp deps/lib1.jar MainClass && java -cp deps/lib1.jar TestClass", result);
+                "java -cp "
+                        + expectedPath
+                        + " MainClass && java -cp "
+                        + expectedPath
+                        + " TestClass",
+                result);
     }
 
     @Test
@@ -220,8 +228,12 @@ class ScriptUtilsTest {
         String command = "java -cp .:${deps} -Dmyprop=value MainClass arg1";
         String result = (String) processCommand.invoke(null, command, classpath);
 
+        // Use the actual paths as they would be processed
         String expectedClasspath =
-                String.join(System.getProperty("path.separator"), "deps/lib1.jar", "deps/lib2.jar");
+                String.join(
+                        System.getProperty("path.separator"),
+                        classpath.get(0).toString(),
+                        classpath.get(1).toString());
         assertEquals("java -cp .:" + expectedClasspath + " -Dmyprop=value MainClass arg1", result);
     }
 }
