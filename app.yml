@@ -1,5 +1,14 @@
-actions:
-  build: javac -cp ${deps} *.java
-  test: java -cp ${deps} TestRunner
 dependencies:
-  com.example:test-lib: 1.0.0
+  eu.maveniverse.maven.mima:context: "2.4.33"
+  eu.maveniverse.maven.mima.runtime:standalone-static: "2.4.33"
+  info.picocli:picocli: "4.7.7"
+  org.yaml:snakeyaml: "2.4"
+  org.jline:jline-console-ui: "3.30.5"
+  org.jline:jline-terminal-jni: "3.30.5"
+  org.slf4j:slf4j-api: "2.0.17"
+  org.slf4j:slf4j-simple: "2.0.17"
+
+actions:
+  build: "./mvnw clean compile"
+  run: "java -jar target/jpm-0.4.1-cli.jar"
+  test: "./mvnw test"

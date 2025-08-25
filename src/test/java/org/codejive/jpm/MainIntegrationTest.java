@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.codejive.jpm.util.ScriptUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -199,7 +200,7 @@ class MainIntegrationTest {
 
         // Be more lenient on Windows as file operations can be slower
         // Allow up to 5 seconds on Windows, 1 second on other platforms
-        boolean isWindows = System.getProperty("os.name").toLowerCase().contains("win");
+        boolean isWindows = ScriptUtils.isWindows();
         long maxTime = isWindows ? 5000 : 1000;
         assertTrue((endTime - startTime) < maxTime, "Simple action should execute quickly");
         assertTrue(exitCode >= 0);

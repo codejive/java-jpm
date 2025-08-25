@@ -167,11 +167,8 @@ class ScriptUtilsTest {
     }
 
     @Test
-    void testIsWindows() throws Exception {
-        Method isWindows = ScriptUtils.class.getDeclaredMethod("isWindows");
-        isWindows.setAccessible(true);
-
-        boolean result = (Boolean) isWindows.invoke(null);
+    void testIsWindows() {
+        boolean result = ScriptUtils.isWindows();
 
         // The result should match the current OS
         String os = System.getProperty("os.name").toLowerCase();

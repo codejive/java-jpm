@@ -106,7 +106,7 @@ public class ScriptUtils {
     }
 
     /** Checks if the current operating system is Windows. */
-    private static boolean isWindows() {
+    public static boolean isWindows() {
         String os =
                 System.getProperty("os.name")
                         .toLowerCase(Locale.ENGLISH)
