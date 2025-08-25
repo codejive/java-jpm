@@ -16,8 +16,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.codejive.jpm.json.AppInfo;
-import org.codejive.jpm.util.SyncStats;
 import org.codejive.jpm.util.ScriptUtils;
+import org.codejive.jpm.util.SyncStats;
 import org.codejive.jpm.util.Version;
 import org.jline.consoleui.elements.InputValue;
 import org.jline.consoleui.elements.ListChoice;
@@ -332,11 +332,12 @@ public class Main {
         public Integer call() throws Exception {
             AppInfo appInfo = AppInfo.read();
             String command = appInfo.getAction(actionName);
-            
+
             if (command == null) {
                 System.err.println("Action '" + actionName + "' not found in app.yml");
                 if (!appInfo.getActionNames().isEmpty()) {
-                    System.err.println("Available actions: " + String.join(", ", appInfo.getActionNames()));
+                    System.err.println(
+                            "Available actions: " + String.join(", ", appInfo.getActionNames()));
                 }
                 return 1;
             }
@@ -344,11 +345,13 @@ public class Main {
             // Get the classpath for variable substitution using app.yml dependencies
             List<Path> classpath = Collections.emptyList();
             try {
-                classpath = Jpm.builder()
-                        .directory(copyMixin.directory)
-                        .noLinks(copyMixin.noLinks)
-                        .build()
-                        .path(new String[0]); // Empty array means use dependencies from app.yml
+                classpath =
+                        Jpm.builder()
+                                .directory(copyMixin.directory)
+                                .noLinks(copyMixin.noLinks)
+                                .build()
+                                .path(new String[0]); // Empty array means use dependencies from
+                // app.yml
             } catch (Exception e) {
                 // If we can't get the classpath, continue with empty list
                 System.err.println("Warning: Could not resolve classpath: " + e.getMessage());
@@ -357,8 +360,6 @@ public class Main {
             return ScriptUtils.executeScript(command, classpath);
         }
     }
-
-
 
     static class CopyMixin {
         @Option(
@@ -421,19 +422,19 @@ public class Main {
                     "Running 'jpm search --interactive', try 'jpm --help' for more options");
             args = new String[] {"search", "--interactive"};
         }
-        
+
         // Handle common aliases
         if (args.length > 0) {
             String firstArg = args[0];
-            if ("compile".equals(firstArg) || "test".equals(firstArg) || "run".equals(firstArg)) {
-                // Convert "jpm compile", "jpm test", "jpm run" to "jpm do <command>"
+            if ("build".equals(firstArg) || "test".equals(firstArg) || "run".equals(firstArg)) {
+                // Convert "jpm build", "jpm test", "jpm run" to "jpm do <command>"
                 String[] newArgs = new String[args.length + 1];
                 newArgs[0] = "do";
                 System.arraycopy(args, 0, newArgs, 1, args.length);
                 args = newArgs;
             }
         }
-        
+
         new CommandLine(new Main()).execute(args);
     }
 }

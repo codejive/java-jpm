@@ -79,8 +79,7 @@ public class AppInfo {
             }
         }
         // Parse actions section
-        if (appInfo.yaml.containsKey("actions")
-                && appInfo.yaml.get("actions") instanceof Map) {
+        if (appInfo.yaml.containsKey("actions") && appInfo.yaml.get("actions") instanceof Map) {
             Map<String, Object> actions = (Map<String, Object>) appInfo.yaml.get("actions");
             for (Map.Entry<String, Object> entry : actions.entrySet()) {
                 appInfo.actions.put(entry.getKey(), entry.getValue().toString());

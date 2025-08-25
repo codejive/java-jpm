@@ -19,17 +19,17 @@ public class ScriptUtils {
      * @throws IOException if an error occurred during execution
      * @throws InterruptedException if the execution was interrupted
      */
-    public static int executeScript(String command, List<Path> classpath) 
+    public static int executeScript(String command, List<Path> classpath)
             throws IOException, InterruptedException {
         String processedCommand = processCommand(command, classpath);
-        
+
         // Split command into tokens for ProcessBuilder
         String[] commandTokens = parseCommand(processedCommand);
-        
+
         ProcessBuilder pb = new ProcessBuilder(commandTokens);
         pb.inheritIO(); // Connect to current process's stdin/stdout/stderr
         Process process = pb.start();
-        
+
         return process.waitFor();
     }
 
@@ -42,47 +42,49 @@ public class ScriptUtils {
      */
     private static String processCommand(String command, List<Path> classpath) {
         String result = command;
-        
+
         // Substitute ${deps} with the classpath
         if (result.contains("${deps}")) {
             String classpathStr = "";
             if (classpath != null && !classpath.isEmpty()) {
-                classpathStr = classpath.stream()
-                        .map(Path::toString)
-                        .collect(Collectors.joining(File.pathSeparator));
+                classpathStr =
+                        classpath.stream()
+                                .map(Path::toString)
+                                .collect(Collectors.joining(File.pathSeparator));
             }
             result = result.replace("${deps}", classpathStr);
         }
-        
+
         // Convert Unix-style paths to Windows if needed
         if (isWindows()) {
             result = convertPathsForWindows(result);
         }
-        
+
         return result;
     }
 
     /**
-     * Converts Unix-style paths to Windows format.
-     * This is a simple heuristic that looks for patterns like "deps/*" and converts them.
+     * Converts Unix-style paths to Windows format. This is a simple heuristic that looks for
+     * patterns like "deps/*" and converts them.
      */
     private static String convertPathsForWindows(String command) {
         // Convert forward slashes in path-like patterns to backslashes
-        // This is a simple heuristic - in a real implementation you might want more sophisticated logic
+        // This is a simple heuristic - in a real implementation you might want more sophisticated
+        // logic
         return command.replaceAll("([a-zA-Z0-9_.-]+)/\\*", "$1\\\\*")
-                     .replaceAll("([a-zA-Z0-9_.-]+)/([a-zA-Z0-9_.-]+)", "$1\\\\$2");
+                .replaceAll("([a-zA-Z0-9_.-]+)/([a-zA-Z0-9_.-]+)", "$1\\\\$2");
     }
 
     /**
-     * Parses a command string into tokens for ProcessBuilder.
-     * This is a simple implementation that splits on spaces while respecting quotes.
+     * Parses a command string into tokens for ProcessBuilder. This is a simple implementation that
+     * splits on spaces while respecting quotes.
      */
     private static String[] parseCommand(String command) {
         // Simple parsing - for a full implementation you'd want proper shell parsing
         java.util.List<String> tokens = new java.util.ArrayList<>();
         boolean inQuotes = false;
         StringBuilder currentToken = new StringBuilder();
-        
+
         for (char c : command.toCharArray()) {
             if (c == '"' || c == '\'') {
                 inQuotes = !inQuotes;
@@ -95,21 +97,20 @@ public class ScriptUtils {
                 currentToken.append(c);
             }
         }
-        
+
         if (currentToken.length() > 0) {
             tokens.add(currentToken.toString());
         }
-        
+
         return tokens.toArray(new String[0]);
     }
 
-    /**
-     * Checks if the current operating system is Windows.
-     */
+    /** Checks if the current operating system is Windows. */
     private static boolean isWindows() {
-        String os = System.getProperty("os.name")
-                .toLowerCase(Locale.ENGLISH)
-                .replaceAll("[^a-z0-9]+", "");
+        String os =
+                System.getProperty("os.name")
+                        .toLowerCase(Locale.ENGLISH)
+                        .replaceAll("[^a-z0-9]+", "");
         return os.startsWith("win");
     }
 }
