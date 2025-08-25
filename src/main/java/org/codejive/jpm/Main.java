@@ -48,8 +48,7 @@ import picocli.CommandLine.Parameters;
             Main.Search.class,
             Main.Install.class,
             Main.PrintPath.class,
-            Main.Do.class,
-            Main.Run.class
+            Main.Do.class
         })
 public class Main {
 
@@ -318,26 +317,26 @@ public class Main {
     @Command(
             name = "do",
             description =
-                    "Executes a script command defined in the app.yml file. Scripts can use variable substitution for classpath.\n\n"
+                    "Executes an action command defined in the app.yml file. Actions can use variable substitution for classpath.\n\n"
                             + "Example:\n  jpm do build\n  jpm do test\n")
     static class Do implements Callable<Integer> {
         @Mixin CopyMixin copyMixin;
 
         @Parameters(
-                paramLabel = "scriptName",
-                description = "Name of the script to execute as defined in app.yml",
+                paramLabel = "actionName",
+                description = "Name of the action to execute as defined in app.yml",
                 arity = "1")
-        private String scriptName;
+        private String actionName;
 
         @Override
         public Integer call() throws Exception {
             AppInfo appInfo = AppInfo.read();
-            String command = appInfo.getScript(scriptName);
+            String command = appInfo.getAction(actionName);
             
             if (command == null) {
-                System.err.println("Script '" + scriptName + "' not found in app.yml");
-                if (!appInfo.getScriptNames().isEmpty()) {
-                    System.err.println("Available scripts: " + String.join(", ", appInfo.getScriptNames()));
+                System.err.println("Action '" + actionName + "' not found in app.yml");
+                if (!appInfo.getActionNames().isEmpty()) {
+                    System.err.println("Available actions: " + String.join(", ", appInfo.getActionNames()));
                 }
                 return 1;
             }
@@ -359,43 +358,7 @@ public class Main {
         }
     }
 
-    @Command(
-            name = "run",
-            description =
-                    "Alias for 'jpm do run'. Executes the 'run' script defined in the app.yml file.\n\n"
-                            + "Example:\n  jpm run\n")
-    static class Run implements Callable<Integer> {
-        @Mixin CopyMixin copyMixin;
 
-        @Override
-        public Integer call() throws Exception {
-            AppInfo appInfo = AppInfo.read();
-            String command = appInfo.getScript("run");
-            
-            if (command == null) {
-                System.err.println("Script 'run' not found in app.yml");
-                if (!appInfo.getScriptNames().isEmpty()) {
-                    System.err.println("Available scripts: " + String.join(", ", appInfo.getScriptNames()));
-                }
-                return 1;
-            }
-
-            // Get the classpath for variable substitution using app.yml dependencies
-            List<Path> classpath = Collections.emptyList();
-            try {
-                classpath = Jpm.builder()
-                        .directory(copyMixin.directory)
-                        .noLinks(copyMixin.noLinks)
-                        .build()
-                        .path(new String[0]); // Empty array means use dependencies from app.yml
-            } catch (Exception e) {
-                // If we can't get the classpath, continue with empty list
-                System.err.println("Warning: Could not resolve classpath: " + e.getMessage());
-            }
-
-            return ScriptUtils.executeScript(command, classpath);
-        }
-    }
 
     static class CopyMixin {
         @Option(
@@ -462,8 +425,8 @@ public class Main {
         // Handle common aliases
         if (args.length > 0) {
             String firstArg = args[0];
-            if ("compile".equals(firstArg) || "test".equals(firstArg)) {
-                // Convert "jpm compile" to "jpm do compile" and "jpm test" to "jpm do test"
+            if ("compile".equals(firstArg) || "test".equals(firstArg) || "run".equals(firstArg)) {
+                // Convert "jpm compile", "jpm test", "jpm run" to "jpm do <command>"
                 String[] newArgs = new String[args.length + 1];
                 newArgs[0] = "do";
                 System.arraycopy(args, 0, newArgs, 1, args.length);

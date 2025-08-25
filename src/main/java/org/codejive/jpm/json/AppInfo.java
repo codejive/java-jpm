@@ -18,7 +18,7 @@ import org.yaml.snakeyaml.Yaml;
 public class AppInfo {
     private Map<String, Object> yaml = new TreeMap<>();
     public Map<String, String> dependencies = new TreeMap<>();
-    public Map<String, String> scripts = new TreeMap<>();
+    public Map<String, String> actions = new TreeMap<>();
 
     /** The official name of the app.yml file. */
     public static final String APP_INFO_FILE = "app.yml";
@@ -35,22 +35,22 @@ public class AppInfo {
     }
 
     /**
-     * Returns the script command for the given script name.
+     * Returns the action command for the given action name.
      *
-     * @param scriptName The name of the script
-     * @return The script command or null if not found
+     * @param actionName The name of the action
+     * @return The action command or null if not found
      */
-    public String getScript(String scriptName) {
-        return scripts.get(scriptName);
+    public String getAction(String actionName) {
+        return actions.get(actionName);
     }
 
     /**
-     * Returns all available script names.
+     * Returns all available action names.
      *
-     * @return A set of script names
+     * @return A set of action names
      */
-    public java.util.Set<String> getScriptNames() {
-        return scripts.keySet();
+    public java.util.Set<String> getActionNames() {
+        return actions.keySet();
     }
 
     /**
@@ -78,12 +78,12 @@ public class AppInfo {
                 appInfo.dependencies.put(entry.getKey(), entry.getValue().toString());
             }
         }
-        // Parse scripts section
-        if (appInfo.yaml.containsKey("scripts")
-                && appInfo.yaml.get("scripts") instanceof Map) {
-            Map<String, Object> scripts = (Map<String, Object>) appInfo.yaml.get("scripts");
-            for (Map.Entry<String, Object> entry : scripts.entrySet()) {
-                appInfo.scripts.put(entry.getKey(), entry.getValue().toString());
+        // Parse actions section
+        if (appInfo.yaml.containsKey("actions")
+                && appInfo.yaml.get("actions") instanceof Map) {
+            Map<String, Object> actions = (Map<String, Object>) appInfo.yaml.get("actions");
+            for (Map.Entry<String, Object> entry : actions.entrySet()) {
+                appInfo.actions.put(entry.getKey(), entry.getValue().toString());
             }
         }
         return appInfo;
@@ -104,7 +104,7 @@ public class AppInfo {
             Yaml yaml = new Yaml(dopts);
             // WARNING awful code ahead
             appInfo.yaml.put("dependencies", (Map<String, Object>) (Map) appInfo.dependencies);
-            appInfo.yaml.put("scripts", (Map<String, Object>) (Map) appInfo.scripts);
+            appInfo.yaml.put("actions", (Map<String, Object>) (Map) appInfo.actions);
             yaml.dump(appInfo.yaml, out);
         }
     }
