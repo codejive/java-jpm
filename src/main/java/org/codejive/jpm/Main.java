@@ -368,19 +368,21 @@ public class Main {
                 return 1;
             }
 
-            // Get the classpath for variable substitution using app.yml dependencies
+            // Get the classpath for variable substitution only if needed
             List<Path> classpath = Collections.emptyList();
-            try {
-                classpath =
-                        Jpm.builder()
-                                .directory(copyMixin.directory)
-                                .noLinks(copyMixin.noLinks)
-                                .build()
-                                .path(new String[0]); // Empty array means use dependencies from
-                // app.yml
-            } catch (Exception e) {
-                // If we can't get the classpath, continue with empty list
-                System.err.println("Warning: Could not resolve classpath: " + e.getMessage());
+            if (command.contains("${deps}")) {
+                try {
+                    classpath =
+                            Jpm.builder()
+                                    .directory(copyMixin.directory)
+                                    .noLinks(copyMixin.noLinks)
+                                    .build()
+                                    .path(new String[0]); // Empty array means use dependencies from
+                    // app.yml
+                } catch (Exception e) {
+                    // If we can't get the classpath, continue with empty list
+                    System.err.println("Warning: Could not resolve classpath: " + e.getMessage());
+                }
             }
 
             return ScriptUtils.executeScript(command, classpath);
