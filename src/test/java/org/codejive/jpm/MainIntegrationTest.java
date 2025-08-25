@@ -188,7 +188,7 @@ class MainIntegrationTest {
 
     @Test
     void testDoCommandPerformanceOptimization() throws IOException {
-        // Create app.yml with action that doesn't use ${deps}
+        // Create app.yml with action that doesn't use {{deps}}
         createAppYmlWithSimpleAction();
 
         CommandLine cmd = new CommandLine(new Main());
@@ -224,9 +224,9 @@ class MainIntegrationTest {
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  build: \"javac -cp ${deps} *.java\"\n"
-                        + "  test: \"java -cp ${deps} TestRunner\"\n"
-                        + "  run: \"java -cp .:${deps} MainClass\"\n"
+                        + "  build: \"javac -cp {{deps}} *.java\"\n"
+                        + "  test: \"java -cp {{deps}} TestRunner\"\n"
+                        + "  run: \"java -cp .:{{deps}} MainClass\"\n"
                         + "  hello: \"echo Hello World\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
@@ -242,7 +242,7 @@ class MainIntegrationTest {
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  test: \"java -cp ${deps} TestRunner\"\n"
+                        + "  test: \"java -cp {{deps}} TestRunner\"\n"
                         + "  hello: \"echo Hello World\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }

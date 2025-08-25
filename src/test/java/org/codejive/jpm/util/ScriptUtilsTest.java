@@ -26,7 +26,7 @@ class ScriptUtilsTest {
                         Paths.get("deps/lib2.jar"),
                         Paths.get("deps/lib3.jar"));
 
-        String command = "java -cp ${deps} MainClass";
+        String command = "java -cp {{deps}} MainClass";
         String result = (String) processCommand.invoke(null, command, classpath);
 
         // Use the actual paths from the classpath as they would be processed
@@ -49,7 +49,7 @@ class ScriptUtilsTest {
         String command = "echo Hello World";
         String result = (String) processCommand.invoke(null, command, classpath);
 
-        // Command should remain unchanged since no ${deps} variable
+        // Command should remain unchanged since no {{deps}} variable
         assertEquals("echo Hello World", result);
     }
 
@@ -60,10 +60,10 @@ class ScriptUtilsTest {
         processCommand.setAccessible(true);
 
         List<Path> classpath = Collections.emptyList();
-        String command = "java -cp ${deps} MainClass";
+        String command = "java -cp {{deps}} MainClass";
         String result = (String) processCommand.invoke(null, command, classpath);
 
-        // ${deps} should be replaced with empty string
+        // {{deps}} should be replaced with empty string
         assertEquals("java -cp  MainClass", result);
     }
 
@@ -73,10 +73,10 @@ class ScriptUtilsTest {
                 ScriptUtils.class.getDeclaredMethod("processCommand", String.class, List.class);
         processCommand.setAccessible(true);
 
-        String command = "java -cp ${deps} MainClass";
+        String command = "java -cp {{deps}} MainClass";
         String result = (String) processCommand.invoke(null, command, null);
 
-        // ${deps} should be replaced with empty string
+        // {{deps}} should be replaced with empty string
         assertEquals("java -cp  MainClass", result);
     }
 
@@ -87,7 +87,7 @@ class ScriptUtilsTest {
         processCommand.setAccessible(true);
 
         List<Path> classpath = Arrays.asList(Paths.get("deps/lib1.jar"));
-        String command = "java -cp ${deps} MainClass && java -cp ${deps} TestClass";
+        String command = "java -cp {{deps}} MainClass && java -cp {{deps}} TestClass";
         String result = (String) processCommand.invoke(null, command, classpath);
 
         // Use the actual path as it would be processed
@@ -222,7 +222,7 @@ class ScriptUtilsTest {
         List<Path> classpath =
                 Arrays.asList(Paths.get("deps/lib1.jar"), Paths.get("deps/lib2.jar"));
 
-        String command = "java -cp .:${deps} -Dmyprop=value MainClass arg1";
+        String command = "java -cp .:{{deps}} -Dmyprop=value MainClass arg1";
         String result = (String) processCommand.invoke(null, command, classpath);
 
         // Use the actual paths as they would be processed

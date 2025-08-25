@@ -370,7 +370,7 @@ public class Main {
 
             // Get the classpath for variable substitution only if needed
             List<Path> classpath = Collections.emptyList();
-            if (command.contains("${deps}")) {
+            if (command.contains("{{deps}}")) {
                 try {
                     classpath =
                             Jpm.builder()

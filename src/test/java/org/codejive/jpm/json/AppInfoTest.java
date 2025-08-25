@@ -23,9 +23,9 @@ class AppInfoTest {
                         + "  com.example:test-lib: \"1.0.0\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  build: \"javac -cp ${deps} *.java\"\n"
-                        + "  test: \"java -cp ${deps} TestRunner\"\n"
-                        + "  run: \"java -cp .:${deps} MainClass\"\n"
+                        + "  build: \"javac -cp {{deps}} *.java\"\n"
+                        + "  test: \"java -cp {{deps}} TestRunner\"\n"
+                        + "  run: \"java -cp .:{{deps}} MainClass\"\n"
                         + "  hello: \"echo Hello World\"\n";
         Files.writeString(appYmlPath, yamlContent);
 
@@ -37,9 +37,9 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test action retrieval
-            assertEquals("javac -cp ${deps} *.java", appInfo.getAction("build"));
-            assertEquals("java -cp ${deps} TestRunner", appInfo.getAction("test"));
-            assertEquals("java -cp .:${deps} MainClass", appInfo.getAction("run"));
+            assertEquals("javac -cp {{deps}} *.java", appInfo.getAction("build"));
+            assertEquals("java -cp {{deps}} TestRunner", appInfo.getAction("test"));
+            assertEquals("java -cp .:{{deps}} MainClass", appInfo.getAction("run"));
             assertEquals("echo Hello World", appInfo.getAction("hello"));
 
             // Test action names
@@ -108,8 +108,8 @@ class AppInfoTest {
     void testWriteAppInfoWithActions() throws IOException {
         AppInfo appInfo = new AppInfo();
         appInfo.dependencies.put("com.example:test-lib", "1.0.0");
-        appInfo.actions.put("build", "javac -cp ${deps} *.java");
-        appInfo.actions.put("test", "java -cp ${deps} TestRunner");
+        appInfo.actions.put("build", "javac -cp {{deps}} *.java");
+        appInfo.actions.put("test", "java -cp {{deps}} TestRunner");
 
         String originalDir = System.getProperty("user.dir");
         System.setProperty("user.dir", tempDir.toString());
@@ -123,8 +123,8 @@ class AppInfoTest {
 
             // Read it back and verify
             AppInfo readBack = AppInfo.read();
-            assertEquals("javac -cp ${deps} *.java", readBack.getAction("build"));
-            assertEquals("java -cp ${deps} TestRunner", readBack.getAction("test"));
+            assertEquals("javac -cp {{deps}} *.java", readBack.getAction("build"));
+            assertEquals("java -cp {{deps}} TestRunner", readBack.getAction("test"));
             assertEquals(2, readBack.getActionNames().size());
             assertEquals(1, readBack.dependencies.size());
         } finally {
@@ -140,10 +140,10 @@ class AppInfoTest {
                         + "  com.example:test-lib: \"1.0.0\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  complex: \"java -cp ${deps} -Dprop=value MainClass arg1 arg2\"\n"
+                        + "  complex: \"java -cp {{deps}} -Dprop=value MainClass arg1 arg2\"\n"
                         + "  quoted: 'echo \"Hello with spaces\"'\n"
                         + "  multiline: >\n"
-                        + "    java -cp ${deps}\n"
+                        + "    java -cp {{deps}}\n"
                         + "    -Xmx1g\n"
                         + "    MainClass\n";
         Files.writeString(appYmlPath, yamlContent);
@@ -155,10 +155,10 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             assertEquals(
-                    "java -cp ${deps} -Dprop=value MainClass arg1 arg2",
+                    "java -cp {{deps}} -Dprop=value MainClass arg1 arg2",
                     appInfo.getAction("complex"));
             assertEquals("echo \"Hello with spaces\"", appInfo.getAction("quoted"));
-            assertTrue(appInfo.getAction("multiline").contains("java -cp ${deps}"));
+            assertTrue(appInfo.getAction("multiline").contains("java -cp {{deps}}"));
             assertEquals(3, appInfo.getActionNames().size());
         } finally {
             System.setProperty("user.dir", originalDir);

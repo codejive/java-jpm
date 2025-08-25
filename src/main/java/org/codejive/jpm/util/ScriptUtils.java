@@ -14,7 +14,7 @@ public class ScriptUtils {
      * Executes a script command with variable substitution and path conversion.
      *
      * @param command The command to execute
-     * @param classpath The classpath to use for ${deps} substitution
+     * @param classpath The classpath to use for {{deps}} substitution
      * @return The exit code of the executed command
      * @throws IOException if an error occurred during execution
      * @throws InterruptedException if the execution was interrupted
@@ -37,14 +37,14 @@ public class ScriptUtils {
      * Processes a command by performing variable substitution and path conversion.
      *
      * @param command The raw command
-     * @param classpath The classpath to use for ${deps} substitution
+     * @param classpath The classpath to use for {{deps}} substitution
      * @return The processed command
      */
     private static String processCommand(String command, List<Path> classpath) {
         String result = command;
 
-        // Substitute ${deps} with the classpath
-        if (result.contains("${deps}")) {
+        // Substitute {{deps}} with the classpath
+        if (result.contains("{{deps}}")) {
             String classpathStr = "";
             if (classpath != null && !classpath.isEmpty()) {
                 classpathStr =
@@ -52,7 +52,7 @@ public class ScriptUtils {
                                 .map(Path::toString)
                                 .collect(Collectors.joining(File.pathSeparator));
             }
-            result = result.replace("${deps}", classpathStr);
+            result = result.replace("{{deps}}", classpathStr);
         }
 
         // Convert Unix-style paths to Windows if needed
