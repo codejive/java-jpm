@@ -318,8 +318,8 @@ public class Main {
     @Command(
             name = "do",
             description =
-                    "Executes a script command defined in the app.yml file. Scripts can use variable substitution for classpath.\\n\\n"
-                            + "Example:\\n  jpm do build\\n  jpm do test\\n")
+                    "Executes a script command defined in the app.yml file. Scripts can use variable substitution for classpath.\n\n"
+                            + "Example:\n  jpm do build\n  jpm do test\n")
     static class Do implements Callable<Integer> {
         @Mixin CopyMixin copyMixin;
 
