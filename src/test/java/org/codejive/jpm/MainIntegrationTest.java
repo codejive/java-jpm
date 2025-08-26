@@ -167,8 +167,9 @@ class MainIntegrationTest {
 
             assertEquals(1, exitCode);
             String errorOutput = capture.getErr();
-            assertTrue(errorOutput.contains("Action 'nonexistent' not found in app.yml"));
-            assertTrue(errorOutput.contains("Available actions: build, hello, run, test"));
+            assertTrue(
+                    errorOutput.contains(
+                            "Action 'nonexistent' not found in app.yml. Use --list to see available actions."));
         }
     }
 

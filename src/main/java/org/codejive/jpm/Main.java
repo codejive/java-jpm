@@ -335,24 +335,29 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             try {
-                Jpm.ActionResult result =
-                        Jpm.builder()
-                                .directory(copyMixin.directory)
-                                .noLinks(copyMixin.noLinks)
-                                .build()
-                                .executeAction(actionName, list);
-
-                if (result.hasMessage()) {
-                    if (result.isSuccess()) {
-                        System.out.println(result.getMessage());
+                if (list) {
+                    List<String> actionNames =
+                            Jpm.builder()
+                                    .directory(copyMixin.directory)
+                                    .noLinks(copyMixin.noLinks)
+                                    .build()
+                                    .listActions();
+                    if (actionNames.isEmpty()) {
+                        System.out.println("No actions defined in app.yml");
                     } else {
-                        System.err.println(result.getMessage());
+                        System.out.println("Available actions:");
+                        actionNames.forEach(n -> System.out.println("   " + n));
                     }
+                    return 0;
+                } else {
+                    return Jpm.builder()
+                            .directory(copyMixin.directory)
+                            .noLinks(copyMixin.noLinks)
+                            .build()
+                            .executeAction(actionName);
                 }
-
-                return result.getExitCode();
             } catch (Exception e) {
-                System.err.println("Error: " + e.getMessage());
+                System.err.println(e.getMessage());
                 return 1;
             }
         }
