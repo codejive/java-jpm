@@ -1,7 +1,9 @@
 package org.codejive.jpm.util;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -27,10 +29,12 @@ public class ScriptUtils {
         String[] commandTokens = parseCommand(processedCommand);
 
         ProcessBuilder pb = new ProcessBuilder(commandTokens);
-        pb.inheritIO(); // Connect to current process's stdin/stdout/stderr
-        Process process = pb.start();
+        pb.redirectErrorStream(true);
+        Process p = pb.start();
+        BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        String cmdOutput = br.lines().collect(Collectors.joining("\n"));
 
-        return process.waitFor();
+        return p.waitFor();
     }
 
     /**

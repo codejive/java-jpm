@@ -242,16 +242,18 @@ class MainIntegrationTest {
         CommandLine cmd = new CommandLine(new Main());
 
         // This should execute quickly since it doesn't need to resolve classpath
-        long startTime = System.currentTimeMillis();
-        int exitCode = cmd.execute("do", "simple");
-        long endTime = System.currentTimeMillis();
+        try (TestOutputCapture capture = captureOutput()) {
+            long startTime = System.currentTimeMillis();
+            int exitCode = cmd.execute("do", "simple");
+            long endTime = System.currentTimeMillis();
 
-        // Be more lenient on Windows as file operations can be slower
-        // Allow up to 5 seconds on Windows, 1 second on other platforms
-        boolean isWindows = ScriptUtils.isWindows();
-        long maxTime = isWindows ? 5000 : 1000;
-        assertTrue((endTime - startTime) < maxTime, "Simple action should execute quickly");
-        assertTrue(exitCode >= 0);
+            // Be more lenient on Windows as file operations can be slower
+            // Allow up to 5 seconds on Windows, 1 second on other platforms
+            boolean isWindows = ScriptUtils.isWindows();
+            long maxTime = isWindows ? 5000 : 1000;
+            assertTrue((endTime - startTime) < maxTime, "Simple action should execute quickly");
+            assertTrue(exitCode >= 0);
+        }
     }
 
     @Test
