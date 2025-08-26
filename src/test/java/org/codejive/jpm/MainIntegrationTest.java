@@ -267,6 +267,8 @@ class MainIntegrationTest {
     }
 
     private void createAppYml() throws IOException {
+        // Use platform-specific command for simple action that works on both Windows and Unix
+        String simpleCommand = ScriptUtils.isWindows() ? "echo off" : "true";
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
@@ -275,7 +277,9 @@ class MainIntegrationTest {
                         + "  build: \"javac -cp {{deps}} *.java\"\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
                         + "  run: \"java -cp .:{{deps}} MainClass\"\n"
-                        + "  hello: \"true\"\n";
+                        + "  hello: \""
+                        + simpleCommand
+                        + "\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
@@ -285,23 +289,31 @@ class MainIntegrationTest {
     }
 
     private void createAppYmlWithoutBuildAction() throws IOException {
+        // Use platform-specific command for simple action that works on both Windows and Unix
+        String simpleCommand = ScriptUtils.isWindows() ? "echo off" : "true";
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
-                        + "  hello: \"true\"\n";
+                        + "  hello: \""
+                        + simpleCommand
+                        + "\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
     private void createAppYmlWithSimpleAction() throws IOException {
+        // Use platform-specific command for simple action that works on both Windows and Unix
+        String simpleCommand = ScriptUtils.isWindows() ? "echo off" : "true";
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  simple: \"true\"\n";
+                        + "  simple: \""
+                        + simpleCommand
+                        + "\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 }
