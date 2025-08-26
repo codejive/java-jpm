@@ -15,8 +15,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import org.codejive.jpm.json.AppInfo;
-import org.codejive.jpm.util.ScriptUtils;
 import org.codejive.jpm.util.SyncStats;
 import org.codejive.jpm.util.Version;
 import org.jline.consoleui.elements.InputValue;
@@ -336,59 +334,25 @@ public class Main {
 
         @Override
         public Integer call() throws Exception {
-            AppInfo appInfo = AppInfo.read();
+            try {
+                Jpm.ActionResult result =
+                        Jpm.builder()
+                                .directory(copyMixin.directory)
+                                .noLinks(copyMixin.noLinks)
+                                .build()
+                                .executeAction(actionName, list);
 
-            // If --list flag is provided, list all available actions
-            if (list) {
-                if (appInfo.getActionNames().isEmpty()) {
-                    System.out.println("No actions defined in app.yml");
-                } else {
-                    System.out.println("Available actions:");
-                    for (String actionName : appInfo.getActionNames()) {
-                        System.out.println("  " + actionName);
+                if (result.hasMessage()) {
+                    if (result.isSuccess()) {
+                        System.out.println(result.getMessage());
+                    } else {
+                        System.err.println(result.getMessage());
                     }
                 }
-                return 0;
-            }
 
-            // If no --list flag, actionName is required
-            if (actionName == null || actionName.trim().isEmpty()) {
-                System.err.println("Action name is required. Use --list to see available actions.");
-                return 1;
-            }
-
-            String command = appInfo.getAction(actionName);
-
-            if (command == null) {
-                System.err.println("Action '" + actionName + "' not found in app.yml");
-                if (!appInfo.getActionNames().isEmpty()) {
-                    System.err.println(
-                            "Available actions: " + String.join(", ", appInfo.getActionNames()));
-                }
-                return 1;
-            }
-
-            // Get the classpath for variable substitution only if needed
-            List<Path> classpath = Collections.emptyList();
-            if (command.contains("{{deps}}")) {
-                try {
-                    classpath =
-                            Jpm.builder()
-                                    .directory(copyMixin.directory)
-                                    .noLinks(copyMixin.noLinks)
-                                    .build()
-                                    .path(new String[0]); // Empty array means use dependencies from
-                    // app.yml
-                } catch (Exception e) {
-                    // If we can't get the classpath, continue with empty list
-                    System.err.println("Warning: Could not resolve classpath: " + e.getMessage());
-                }
-            }
-
-            try {
-                return ScriptUtils.executeScript(command, classpath);
-            } catch (IOException | InterruptedException e) {
-                System.err.println("Error executing action: " + e.getMessage());
+                return result.getExitCode();
+            } catch (Exception e) {
+                System.err.println("Error: " + e.getMessage());
                 return 1;
             }
         }

@@ -167,6 +167,113 @@ public class Jpm {
         return deps;
     }
 
+    /**
+     * Executes an action defined in app.yml file. Returns a result object containing the exit code
+     * and any messages.
+     *
+     * @param actionName The name of the action to execute (null to list actions)
+     * @param listActions Whether to list available actions instead of executing
+     * @return A {@link ActionResult} containing the operation result
+     * @throws IOException If an error occurred during the operation
+     * @throws DependencyResolutionException If an error occurred during dependency resolution
+     */
+    public ActionResult executeAction(String actionName, boolean listActions)
+            throws IOException, DependencyResolutionException {
+        AppInfo appInfo = AppInfo.read();
+
+        // If listing actions is requested
+        if (listActions) {
+            if (appInfo.getActionNames().isEmpty()) {
+                return ActionResult.success("No actions defined in app.yml");
+            } else {
+                StringBuilder sb = new StringBuilder("Available actions:\n");
+                for (String name : appInfo.getActionNames()) {
+                    sb.append("  ").append(name).append("\n");
+                }
+                return ActionResult.success(sb.toString().trim());
+            }
+        }
+
+        // Validate action name is provided
+        if (actionName == null || actionName.trim().isEmpty()) {
+            return ActionResult.error(
+                    "Action name is required. Use --list to see available actions.");
+        }
+
+        // Get the action command
+        String command = appInfo.getAction(actionName);
+        if (command == null) {
+            StringBuilder errorMsg =
+                    new StringBuilder("Action '" + actionName + "' not found in app.yml");
+            if (!appInfo.getActionNames().isEmpty()) {
+                errorMsg.append("\nAvailable actions: ")
+                        .append(String.join(", ", appInfo.getActionNames()));
+            }
+            return ActionResult.error(errorMsg.toString());
+        }
+
+        // Get the classpath for variable substitution only if needed
+        List<Path> classpath = Collections.emptyList();
+        if (command.contains("{{deps}}")) {
+            try {
+                classpath =
+                        this.path(new String[0]); // Empty array means use dependencies from app.yml
+            } catch (Exception e) {
+                // If we can't get the classpath, continue with empty list
+                return ActionResult.error(
+                        "Warning: Could not resolve classpath: " + e.getMessage());
+            }
+        }
+
+        try {
+            int exitCode = ScriptUtils.executeScript(command, classpath);
+            return ActionResult.withExitCode(exitCode);
+        } catch (IOException | InterruptedException e) {
+            return ActionResult.error("Error executing action: " + e.getMessage());
+        }
+    }
+
+    /** Result of an action execution operation. */
+    public static class ActionResult {
+        private final int exitCode;
+        private final String message;
+        private final boolean success;
+
+        private ActionResult(int exitCode, String message, boolean success) {
+            this.exitCode = exitCode;
+            this.message = message;
+            this.success = success;
+        }
+
+        public static ActionResult success(String message) {
+            return new ActionResult(0, message, true);
+        }
+
+        public static ActionResult error(String message) {
+            return new ActionResult(1, message, false);
+        }
+
+        public static ActionResult withExitCode(int exitCode) {
+            return new ActionResult(exitCode, null, exitCode == 0);
+        }
+
+        public int getExitCode() {
+            return exitCode;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public boolean hasMessage() {
+            return message != null && !message.trim().isEmpty();
+        }
+    }
+
     private static boolean isWindows() {
         String os =
                 System.getProperty("os.name")
