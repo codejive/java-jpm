@@ -20,30 +20,64 @@ class MainIntegrationTest {
     @TempDir Path tempDir;
 
     private String originalDir;
-    private PrintStream originalOut;
-    private PrintStream originalErr;
-    private ByteArrayOutputStream outContent;
-    private ByteArrayOutputStream errContent;
 
     @BeforeEach
     void setUp() {
         originalDir = System.getProperty("user.dir");
         System.setProperty("user.dir", tempDir.toString());
-
-        // Capture stdout and stderr
-        originalOut = System.out;
-        originalErr = System.err;
-        outContent = new ByteArrayOutputStream();
-        errContent = new ByteArrayOutputStream();
-        System.setOut(new PrintStream(outContent));
-        System.setErr(new PrintStream(errContent));
     }
 
     @AfterEach
     void tearDown() {
         System.setProperty("user.dir", originalDir);
-        System.setOut(originalOut);
-        System.setErr(originalErr);
+    }
+
+    /**
+     * Helper method to capture stdout/stderr for tests that need to check command output. Only use
+     * this for tests that check jpm's own output, not for tests that execute system commands.
+     */
+    private TestOutputCapture captureOutput() {
+        PrintStream originalOut = System.out;
+        PrintStream originalErr = System.err;
+        ByteArrayOutputStream outContent = new ByteArrayOutputStream();
+        ByteArrayOutputStream errContent = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(outContent));
+        System.setErr(new PrintStream(errContent));
+
+        return new TestOutputCapture(originalOut, originalErr, outContent, errContent);
+    }
+
+    /** Helper class to manage output capture and restoration */
+    private static class TestOutputCapture implements AutoCloseable {
+        private final PrintStream originalOut;
+        private final PrintStream originalErr;
+        private final ByteArrayOutputStream outContent;
+        private final ByteArrayOutputStream errContent;
+
+        TestOutputCapture(
+                PrintStream originalOut,
+                PrintStream originalErr,
+                ByteArrayOutputStream outContent,
+                ByteArrayOutputStream errContent) {
+            this.originalOut = originalOut;
+            this.originalErr = originalErr;
+            this.outContent = outContent;
+            this.errContent = errContent;
+        }
+
+        String getOut() {
+            return outContent.toString();
+        }
+
+        String getErr() {
+            return errContent.toString();
+        }
+
+        @Override
+        public void close() {
+            System.setOut(originalOut);
+            System.setErr(originalErr);
+        }
     }
 
     @Test
@@ -51,16 +85,18 @@ class MainIntegrationTest {
         // Create app.yml with actions
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "--list");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do", "--list");
 
-        assertEquals(0, exitCode);
-        String output = outContent.toString();
-        assertTrue(output.contains("Available actions:"));
-        assertTrue(output.contains("build"));
-        assertTrue(output.contains("test"));
-        assertTrue(output.contains("run"));
-        assertTrue(output.contains("hello"));
+            assertEquals(0, exitCode);
+            String output = capture.getOut();
+            assertTrue(output.contains("Available actions:"));
+            assertTrue(output.contains("build"));
+            assertTrue(output.contains("test"));
+            assertTrue(output.contains("run"));
+            assertTrue(output.contains("hello"));
+        }
     }
 
     @Test
@@ -68,12 +104,14 @@ class MainIntegrationTest {
         // Create app.yml with actions
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "-l");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do", "-l");
 
-        assertEquals(0, exitCode);
-        String output = outContent.toString();
-        assertTrue(output.contains("Available actions:"));
+            assertEquals(0, exitCode);
+            String output = capture.getOut();
+            assertTrue(output.contains("Available actions:"));
+        }
     }
 
     @Test
@@ -81,49 +119,57 @@ class MainIntegrationTest {
         // Create app.yml without actions
         createAppYmlWithoutActions();
 
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "--list");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do", "--list");
 
-        assertEquals(0, exitCode);
-        String output = outContent.toString();
-        assertTrue(output.contains("No actions defined in app.yml"));
+            assertEquals(0, exitCode);
+            String output = capture.getOut();
+            assertTrue(output.contains("No actions defined in app.yml"));
+        }
     }
 
     @Test
     void testDoCommandListNoAppYml() {
         // No app.yml file exists
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "--list");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do", "--list");
 
-        assertEquals(0, exitCode);
-        String output = outContent.toString();
-        assertTrue(output.contains("No actions defined in app.yml"));
+            assertEquals(0, exitCode);
+            String output = capture.getOut();
+            assertTrue(output.contains("No actions defined in app.yml"));
+        }
     }
 
     @Test
     void testDoCommandMissingActionName() throws IOException {
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do");
 
-        assertEquals(1, exitCode);
-        String errorOutput = errContent.toString();
-        assertTrue(errorOutput.contains("Action name is required"));
-        assertTrue(errorOutput.contains("Use --list to see available actions"));
+            assertEquals(1, exitCode);
+            String errorOutput = capture.getErr();
+            assertTrue(errorOutput.contains("Action name is required"));
+            assertTrue(errorOutput.contains("Use --list to see available actions"));
+        }
     }
 
     @Test
     void testDoCommandNonexistentAction() throws IOException {
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "nonexistent");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do", "nonexistent");
 
-        assertEquals(1, exitCode);
-        String errorOutput = errContent.toString();
-        assertTrue(errorOutput.contains("Action 'nonexistent' not found in app.yml"));
-        assertTrue(errorOutput.contains("Available actions: build, hello, run, test"));
+            assertEquals(1, exitCode);
+            String errorOutput = capture.getErr();
+            assertTrue(errorOutput.contains("Action 'nonexistent' not found in app.yml"));
+            assertTrue(errorOutput.contains("Available actions: build, hello, run, test"));
+        }
     }
 
     @Test
@@ -177,13 +223,15 @@ class MainIntegrationTest {
         createAppYmlWithoutBuildAction();
 
         // Test the "do" command directly (which is what the alias redirects to)
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "build");
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = new CommandLine(new Main());
+            int exitCode = cmd.execute("do", "build");
 
-        // Should fail with exit code 1 when action is not found
-        assertEquals(1, exitCode);
-        String errorOutput = errContent.toString();
-        assertTrue(errorOutput.contains("Action 'build' not found in app.yml"));
+            // Should fail with exit code 1 when action is not found
+            assertEquals(1, exitCode);
+            String errorOutput = capture.getErr();
+            assertTrue(errorOutput.contains("Action 'build' not found in app.yml"));
+        }
     }
 
     @Test
@@ -227,7 +275,7 @@ class MainIntegrationTest {
                         + "  build: \"javac -cp {{deps}} *.java\"\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
                         + "  run: \"java -cp .:{{deps}} MainClass\"\n"
-                        + "  hello: \"echo Hello World\"\n";
+                        + "  hello: \"true\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
@@ -243,7 +291,7 @@ class MainIntegrationTest {
                         + "\n"
                         + "actions:\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
-                        + "  hello: \"echo Hello World\"\n";
+                        + "  hello: \"true\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
@@ -253,7 +301,7 @@ class MainIntegrationTest {
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  simple: \"echo Simple action without classpath\"\n";
+                        + "  simple: \"true\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 }
