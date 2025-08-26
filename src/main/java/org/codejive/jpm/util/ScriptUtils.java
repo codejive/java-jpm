@@ -24,10 +24,10 @@ public class ScriptUtils {
     public static int executeScript(String command, List<Path> classpath)
             throws IOException, InterruptedException {
         String processedCommand = processCommand(command, classpath);
-
-        // Split command into tokens for ProcessBuilder
-        String[] commandTokens = parseCommand(processedCommand);
-
+        String[] commandTokens =
+                isWindows()
+                        ? new String[] {"cmd.exe", "/c", processedCommand}
+                        : new String[] {"/bin/sh", "-c", processedCommand};
         ProcessBuilder pb = new ProcessBuilder(commandTokens);
         pb.redirectErrorStream(true);
         Process p = pb.start();
@@ -62,36 +62,6 @@ public class ScriptUtils {
         result = result.replace("{:}", File.pathSeparator);
 
         return result;
-    }
-
-    /**
-     * Parses a command string into tokens for ProcessBuilder. This is a simple implementation that
-     * splits on spaces while respecting quotes.
-     */
-    static String[] parseCommand(String command) {
-        // Simple parsing - for a full implementation you'd want proper shell parsing
-        java.util.List<String> tokens = new java.util.ArrayList<>();
-        boolean inQuotes = false;
-        StringBuilder currentToken = new StringBuilder();
-
-        for (char c : command.toCharArray()) {
-            if (c == '"' || c == '\'') {
-                inQuotes = !inQuotes;
-            } else if (c == ' ' && !inQuotes) {
-                if (currentToken.length() > 0) {
-                    tokens.add(currentToken.toString());
-                    currentToken.setLength(0);
-                }
-            } else {
-                currentToken.append(c);
-            }
-        }
-
-        if (currentToken.length() > 0) {
-            tokens.add(currentToken.toString());
-        }
-
-        return tokens.toArray(new String[0]);
     }
 
     /** Checks if the current operating system is Windows. */

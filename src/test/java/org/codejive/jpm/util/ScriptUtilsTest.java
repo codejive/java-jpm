@@ -78,51 +78,6 @@ class ScriptUtilsTest {
     }
 
     @Test
-    void testParseCommandSimple() throws Exception {
-        String command = "java -cp deps/*.jar MainClass";
-        String[] result = ScriptUtils.parseCommand(command);
-        assertArrayEquals(new String[] {"java", "-cp", "deps/*.jar", "MainClass"}, result);
-    }
-
-    @Test
-    void testParseCommandWithQuotes() throws Exception {
-        String command = "echo \"Hello World\"";
-        String[] result = ScriptUtils.parseCommand(command);
-        assertArrayEquals(new String[] {"echo", "Hello World"}, result);
-    }
-
-    @Test
-    void testParseCommandWithSingleQuotes() throws Exception {
-        String command = "echo 'Hello World'";
-        String[] result = ScriptUtils.parseCommand(command);
-        assertArrayEquals(new String[] {"echo", "Hello World"}, result);
-    }
-
-    @Test
-    void testParseCommandComplex() throws Exception {
-        String command = "java -cp deps/*.jar -Dprop=\"value with spaces\" MainClass arg1 arg2";
-        String[] result = ScriptUtils.parseCommand(command);
-        assertArrayEquals(
-                new String[] {
-                    "java",
-                    "-cp",
-                    "deps/*.jar",
-                    "-Dprop=value with spaces",
-                    "MainClass",
-                    "arg1",
-                    "arg2"
-                },
-                result);
-    }
-
-    @Test
-    void testParseCommandEmpty() throws Exception {
-        String command = "";
-        String[] result = ScriptUtils.parseCommand(command);
-        assertArrayEquals(new String[] {}, result);
-    }
-
-    @Test
     void testIsWindows() {
         boolean result = ScriptUtils.isWindows();
         // The result should match the current OS
