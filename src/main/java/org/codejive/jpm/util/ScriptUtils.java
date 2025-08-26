@@ -44,7 +44,7 @@ public class ScriptUtils {
      * @param classpath The classpath to use for {{deps}} substitution
      * @return The processed command
      */
-    private static String processCommand(String command, List<Path> classpath) {
+    static String processCommand(String command, List<Path> classpath) {
         String result = command;
 
         // Substitute {{deps}} with the classpath
@@ -58,32 +58,17 @@ public class ScriptUtils {
             }
             result = result.replace("{{deps}}", classpathStr);
         }
-
-        // Convert Unix-style paths to Windows if needed
-        if (isWindows()) {
-            result = convertPathsForWindows(result);
-        }
+        result = result.replace("{/}", File.separator);
+        result = result.replace("{:}", File.pathSeparator);
 
         return result;
-    }
-
-    /**
-     * Converts Unix-style paths to Windows format. This is a simple heuristic that looks for
-     * patterns like "deps/*" and converts them.
-     */
-    private static String convertPathsForWindows(String command) {
-        // Convert forward slashes in path-like patterns to backslashes
-        // This is a simple heuristic - in a real implementation you might want more sophisticated
-        // logic
-        return command.replaceAll("([a-zA-Z0-9_.-]+)/\\*", "$1\\\\*")
-                .replaceAll("([a-zA-Z0-9_.-]+)/([a-zA-Z0-9_.-]+)", "$1\\\\$2");
     }
 
     /**
      * Parses a command string into tokens for ProcessBuilder. This is a simple implementation that
      * splits on spaces while respecting quotes.
      */
-    private static String[] parseCommand(String command) {
+    static String[] parseCommand(String command) {
         // Simple parsing - for a full implementation you'd want proper shell parsing
         java.util.List<String> tokens = new java.util.ArrayList<>();
         boolean inQuotes = false;
