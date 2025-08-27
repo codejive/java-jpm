@@ -34,6 +34,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Unmatched;
 
 /** Main class for the jpm command line tool. */
 @Command(
@@ -415,16 +416,22 @@ public class Main {
     abstract static class DoAlias implements Callable<Integer> {
         @Mixin DoAliasMixin doAliasMixin;
 
+        @Unmatched List<String> unmatchedArgs = new ArrayList<>();
+
         abstract String actionName();
 
         @Override
         public Integer call() throws Exception {
             try {
+                // Combine regular args and unmatched args for pass-through
+                ArrayList<String> allArgs = new ArrayList<>(doAliasMixin.args);
+                allArgs.addAll(unmatchedArgs);
+
                 return Jpm.builder()
                         .directory(doAliasMixin.depsMixin.directory)
                         .noLinks(doAliasMixin.depsMixin.noLinks)
                         .build()
-                        .executeAction(actionName(), doAliasMixin.args);
+                        .executeAction(actionName(), allArgs);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 return 1;
@@ -491,8 +498,7 @@ public class Main {
 
         @Parameters(
                 paramLabel = "arguments",
-                description =
-                        "Optional arguments to be passed to the action",
+                description = "Optional arguments to be passed to the action",
                 arity = "0..*",
                 index = "0..*")
         ArrayList<String> args = new ArrayList<>();

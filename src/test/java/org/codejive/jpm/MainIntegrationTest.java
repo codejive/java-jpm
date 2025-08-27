@@ -258,7 +258,8 @@ class MainIntegrationTest {
 
             assertEquals(0, exitCode);
             String output = capture.getOut();
-            assertTrue(output.contains("No actions defined in app.yml"));
+            // The run action should execute and include the classpath in the output
+            assertTrue(output.contains("running... .") && output.contains("libs"));
         }
     }
 
