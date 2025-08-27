@@ -177,15 +177,9 @@ public class Jpm {
      * @throws DependencyResolutionException If an error occurred during dependency resolution
      * @throws InterruptedException If the action execution was interrupted
      */
-    public int executeAction(String actionName)
+    public int executeAction(String actionName, List<String> args)
             throws IOException, DependencyResolutionException, InterruptedException {
         AppInfo appInfo = AppInfo.read();
-
-        // Validate action name is provided
-        if (actionName == null || actionName.trim().isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Action name is required. Use --list to see available actions.");
-        }
 
         // Get the action command
         String command = appInfo.getAction(actionName);
@@ -202,7 +196,7 @@ public class Jpm {
             classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
         }
 
-        return ScriptUtils.executeScript(command, classpath);
+        return ScriptUtils.executeScript(command, args, classpath);
     }
 
     /**

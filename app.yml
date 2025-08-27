@@ -9,6 +9,7 @@ dependencies:
   org.slf4j:slf4j-simple: "2.0.17"
 
 actions:
-  build: "./mvnw clean compile"
-  run: "java -jar target/jpm-0.4.1-cli.jar"
-  test: "./mvnw test"
+  clean: ".{/}mvnw clean"
+  build: ".{/}mvnw spotless:apply package -DskipTests"
+  run: "java -jar target{/}jpm-0.4.1-cli.jar"
+  test: ".{/}mvnw test"

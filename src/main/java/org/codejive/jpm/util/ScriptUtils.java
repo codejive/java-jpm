@@ -16,13 +16,21 @@ public class ScriptUtils {
      * Executes a script command with variable substitution and path conversion.
      *
      * @param command The command to execute
+     * @param args
      * @param classpath The classpath to use for {{deps}} substitution
      * @return The exit code of the executed command
      * @throws IOException if an error occurred during execution
      * @throws InterruptedException if the execution was interrupted
      */
-    public static int executeScript(String command, List<Path> classpath)
+    public static int executeScript(String command, List<String> args, List<Path> classpath)
             throws IOException, InterruptedException {
+        if (args != null && !args.isEmpty()) {
+            command +=
+                    args.stream()
+                            .map(ScriptUtils::quoteArgument)
+                            .collect(Collectors.joining(" ", " ", ""));
+        }
+
         String processedCommand = processCommand(command, classpath);
         String[] commandTokens =
                 isWindows()
@@ -32,9 +40,12 @@ public class ScriptUtils {
         pb.redirectErrorStream(true);
         Process p = pb.start();
         BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-        String cmdOutput = br.lines().collect(Collectors.joining("\n"));
-
+        br.lines().forEach(System.out::println);
         return p.waitFor();
+    }
+
+    static String quoteArgument(String arg) {
+        return arg;
     }
 
     /**

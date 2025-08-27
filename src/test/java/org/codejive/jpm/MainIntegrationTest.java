@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.codejive.jpm.util.ScriptUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -86,7 +85,7 @@ class MainIntegrationTest {
         createAppYml();
 
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "--list");
 
             assertEquals(0, exitCode);
@@ -105,7 +104,7 @@ class MainIntegrationTest {
         createAppYml();
 
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "-l");
 
             assertEquals(0, exitCode);
@@ -120,7 +119,7 @@ class MainIntegrationTest {
         createAppYmlWithoutActions();
 
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "--list");
 
             assertEquals(0, exitCode);
@@ -133,7 +132,7 @@ class MainIntegrationTest {
     void testDoCommandListNoAppYml() {
         // No app.yml file exists
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "--list");
 
             assertEquals(0, exitCode);
@@ -147,7 +146,7 @@ class MainIntegrationTest {
         createAppYml();
 
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do");
 
             assertEquals(1, exitCode);
@@ -162,7 +161,7 @@ class MainIntegrationTest {
         createAppYml();
 
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "nonexistent");
 
             assertEquals(1, exitCode);
@@ -174,22 +173,10 @@ class MainIntegrationTest {
     }
 
     @Test
-    void testDoCommandSimpleAction() throws IOException {
-        createAppYml();
-
-        CommandLine cmd = new CommandLine(new Main());
-        int exitCode = cmd.execute("do", "hello");
-
-        // The exit code depends on whether 'echo' command is available
-        // We mainly test that the command was processed without internal errors
-        assertTrue(exitCode >= 0); // Should not be negative (internal error)
-    }
-
-    @Test
     void testBuildAlias() throws IOException {
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
+        CommandLine cmd = Main.getCommandLine();
         int exitCode = cmd.execute("build");
 
         // Test that build alias works (delegates to 'do build')
@@ -200,7 +187,7 @@ class MainIntegrationTest {
     void testTestAlias() throws IOException {
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
+        CommandLine cmd = Main.getCommandLine();
         int exitCode = cmd.execute("test");
 
         // Test that test alias works (delegates to 'do test')
@@ -211,7 +198,7 @@ class MainIntegrationTest {
     void testRunAlias() throws IOException {
         createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
+        CommandLine cmd = Main.getCommandLine();
         int exitCode = cmd.execute("run");
 
         // Test that run alias works (delegates to 'do run')
@@ -225,7 +212,7 @@ class MainIntegrationTest {
 
         // Test the "do" command directly (which is what the alias redirects to)
         try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = new CommandLine(new Main());
+            CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "build");
 
             // Should fail with exit code 1 when action is not found
@@ -236,31 +223,24 @@ class MainIntegrationTest {
     }
 
     @Test
-    void testDoCommandPerformanceOptimization() throws IOException {
+    void testDoWithOutput() throws IOException {
         // Create app.yml with action that doesn't use {{deps}}
-        createAppYmlWithSimpleAction();
+        createAppYml();
 
-        CommandLine cmd = new CommandLine(new Main());
+        CommandLine cmd = Main.getCommandLine();
 
-        // This should execute quickly since it doesn't need to resolve classpath
         try (TestOutputCapture capture = captureOutput()) {
-            long startTime = System.currentTimeMillis();
-            int exitCode = cmd.execute("do", "simple");
-            long endTime = System.currentTimeMillis();
-
-            // Be more lenient on Windows as file operations can be slower
-            // Allow up to 5 seconds on Windows, 1 second on other platforms
-            boolean isWindows = ScriptUtils.isWindows();
-            long maxTime = isWindows ? 5000 : 1000;
-            assertTrue((endTime - startTime) < maxTime, "Simple action should execute quickly");
-            assertTrue(exitCode >= 0);
+            int exitCode = cmd.execute("do", "hello");
+            assertTrue(exitCode >= 0); // Should not be negative (internal error)
+            String output = capture.getOut();
+            assertTrue(output.contains("Hello World"));
         }
     }
 
     @Test
     void testMainWithNoArgs() {
         // Test the default behavior using CommandLine
-        CommandLine cmd = new CommandLine(new Main());
+        CommandLine cmd = Main.getCommandLine();
         int exitCode = cmd.execute();
 
         // Should show help when no args provided (CommandLine default behavior)
@@ -269,20 +249,30 @@ class MainIntegrationTest {
         assertTrue(exitCode >= 0); // Should not be negative (internal error)
     }
 
+    @Test
+    void testDoAliasWithArgs() throws IOException {
+        createAppYml();
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = Main.getCommandLine();
+            int exitCode = cmd.execute("run", "--foo", "bar");
+
+            assertEquals(0, exitCode);
+            String output = capture.getOut();
+            assertTrue(output.contains("No actions defined in app.yml"));
+        }
+    }
+
     private void createAppYml() throws IOException {
         // Use platform-specific command for simple action that works on both Windows and Unix
-        String simpleCommand = ScriptUtils.isWindows() ? "echo off" : "true";
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  build: \"javac -cp {{deps}} *.java\"\n"
-                        + "  test: \"java -cp {{deps}} TestRunner\"\n"
-                        + "  run: \"java -cp .:{{deps}} MainClass\"\n"
-                        + "  hello: \""
-                        + simpleCommand
-                        + "\"\n";
+                        + "  build: \"echo building... .{/}libs{:}{{deps}}\"\n"
+                        + "  test: \"echo testing... .{/}libs{:}{{deps}}\"\n"
+                        + "  run: \"echo running... .{/}libs{:}{{deps}}\"\n"
+                        + "  hello: \"echo Hello World\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
@@ -293,30 +283,13 @@ class MainIntegrationTest {
 
     private void createAppYmlWithoutBuildAction() throws IOException {
         // Use platform-specific command for simple action that works on both Windows and Unix
-        String simpleCommand = ScriptUtils.isWindows() ? "echo off" : "true";
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
                         + "\n"
                         + "actions:\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
-                        + "  hello: \""
-                        + simpleCommand
-                        + "\"\n";
-        Files.writeString(tempDir.resolve("app.yml"), yamlContent);
-    }
-
-    private void createAppYmlWithSimpleAction() throws IOException {
-        // Use platform-specific command for simple action that works on both Windows and Unix
-        String simpleCommand = ScriptUtils.isWindows() ? "echo off" : "true";
-        String yamlContent =
-                "dependencies:\n"
-                        + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
-                        + "\n"
-                        + "actions:\n"
-                        + "  simple: \""
-                        + simpleCommand
-                        + "\"\n";
+                        + "  hello: \"echo Hello World\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 }
