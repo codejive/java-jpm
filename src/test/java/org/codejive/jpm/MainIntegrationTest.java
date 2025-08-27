@@ -1,6 +1,6 @@
 package org.codejive.jpm;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -88,13 +88,9 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "--list");
 
-            assertEquals(0, exitCode);
+            assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertTrue(output.contains("Available actions:"));
-            assertTrue(output.contains("build"));
-            assertTrue(output.contains("test"));
-            assertTrue(output.contains("run"));
-            assertTrue(output.contains("hello"));
+            assertThat(output).contains("Available actions:", "build", "test", "run", "hello");
         }
     }
 
@@ -107,9 +103,9 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "-l");
 
-            assertEquals(0, exitCode);
+            assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertTrue(output.contains("Available actions:"));
+            assertThat(output.contains("Available actions:")).isTrue();
         }
     }
 
@@ -122,9 +118,9 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "--list");
 
-            assertEquals(0, exitCode);
+            assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertTrue(output.contains("No actions defined in app.yml"));
+            assertThat(output.contains("No actions defined in app.yml")).isTrue();
         }
     }
 
@@ -135,9 +131,9 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "--list");
 
-            assertEquals(0, exitCode);
+            assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertTrue(output.contains("No actions defined in app.yml"));
+            assertThat(output.contains("No actions defined in app.yml")).isTrue();
         }
     }
 
@@ -149,10 +145,10 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do");
 
-            assertEquals(1, exitCode);
+            assertThat(exitCode).isEqualTo(1);
             String errorOutput = capture.getErr();
-            assertTrue(errorOutput.contains("Action name is required"));
-            assertTrue(errorOutput.contains("Use --list to see available actions"));
+            assertThat(errorOutput.contains("Action name is required")).isTrue();
+            assertThat(errorOutput.contains("Use --list to see available actions")).isTrue();
         }
     }
 
@@ -164,11 +160,12 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "nonexistent");
 
-            assertEquals(1, exitCode);
+            assertThat(exitCode).isEqualTo(1);
             String errorOutput = capture.getErr();
-            assertTrue(
-                    errorOutput.contains(
-                            "Action 'nonexistent' not found in app.yml. Use --list to see available actions."));
+            assertThat(
+                            errorOutput.contains(
+                                    "Action 'nonexistent' not found in app.yml. Use --list to see available actions."))
+                    .isTrue();
         }
     }
 
@@ -180,7 +177,7 @@ class MainIntegrationTest {
         int exitCode = cmd.execute("build");
 
         // Test that build alias works (delegates to 'do build')
-        assertTrue(exitCode >= 0);
+        assertThat(exitCode >= 0).isTrue();
     }
 
     @Test
@@ -191,7 +188,7 @@ class MainIntegrationTest {
         int exitCode = cmd.execute("test");
 
         // Test that test alias works (delegates to 'do test')
-        assertTrue(exitCode >= 0);
+        assertThat(exitCode >= 0).isTrue();
     }
 
     @Test
@@ -202,7 +199,7 @@ class MainIntegrationTest {
         int exitCode = cmd.execute("run");
 
         // Test that run alias works (delegates to 'do run')
-        assertTrue(exitCode >= 0);
+        assertThat(exitCode >= 0).isTrue();
     }
 
     @Test
@@ -216,9 +213,9 @@ class MainIntegrationTest {
             int exitCode = cmd.execute("do", "build");
 
             // Should fail with exit code 1 when action is not found
-            assertEquals(1, exitCode);
+            assertThat(exitCode).isEqualTo(1);
             String errorOutput = capture.getErr();
-            assertTrue(errorOutput.contains("Action 'build' not found in app.yml"));
+            assertThat(errorOutput.contains("Action 'build' not found in app.yml")).isTrue();
         }
     }
 
@@ -231,9 +228,9 @@ class MainIntegrationTest {
 
         try (TestOutputCapture capture = captureOutput()) {
             int exitCode = cmd.execute("do", "hello");
-            assertTrue(exitCode >= 0); // Should not be negative (internal error)
+            assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
             String output = capture.getOut();
-            assertTrue(output.contains("Hello World"));
+            assertThat(output.contains("Hello World")).isTrue();
         }
     }
 
@@ -246,7 +243,7 @@ class MainIntegrationTest {
         // Should show help when no args provided (CommandLine default behavior)
         // The Main.main() method redirects to interactive search, but CommandLine.execute()
         // with no args typically shows help
-        assertTrue(exitCode >= 0); // Should not be negative (internal error)
+        assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
     }
 
     @Test
@@ -256,13 +253,10 @@ class MainIntegrationTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("run", "--foo", "bar");
 
-            assertEquals(0, exitCode);
+            assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
             // The run action should execute and include the classpath in the output
-            assertTrue(
-                    output.contains("running... .")
-                            && output.contains("libs")
-                            && output.contains("--foo bar"));
+            assertThat(output).contains("running... .").contains("libs").contains("--foo bar");
         }
     }
 

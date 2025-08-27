@@ -1,6 +1,6 @@
 package org.codejive.jpm;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -53,7 +53,7 @@ class DoCommandPerformanceTest {
             CommandLine cmd = Main.getCommandLine();
             int exitCode = cmd.execute("do", "simple");
 
-            assertEquals(0, exitCode);
+            assertThat(exitCode).isEqualTo(0);
 
             // Verify that executeScript was called with empty classpath
             mockedScriptUtils.verify(

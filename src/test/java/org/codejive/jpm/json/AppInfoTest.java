@@ -1,6 +1,6 @@
 package org.codejive.jpm.json;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -37,26 +37,23 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test action retrieval
-            assertEquals("javac -cp {{deps}} *.java", appInfo.getAction("build"));
-            assertEquals("java -cp {{deps}} TestRunner", appInfo.getAction("test"));
-            assertEquals("java -cp .:{{deps}} MainClass", appInfo.getAction("run"));
-            assertEquals("echo Hello World", appInfo.getAction("hello"));
+            assertThat(appInfo.getAction("build")).isEqualTo("javac -cp {{deps}} *.java");
+            assertThat(appInfo.getAction("test")).isEqualTo("java -cp {{deps}} TestRunner");
+            assertThat(appInfo.getAction("run")).isEqualTo("java -cp .:{{deps}} MainClass");
+            assertThat(appInfo.getAction("hello")).isEqualTo("echo Hello World");
 
             // Test action names
             Set<String> actionNames = appInfo.getActionNames();
-            assertEquals(4, actionNames.size());
-            assertTrue(actionNames.contains("build"));
-            assertTrue(actionNames.contains("test"));
-            assertTrue(actionNames.contains("run"));
-            assertTrue(actionNames.contains("hello"));
+            assertThat(actionNames).hasSize(4);
+            assertThat(actionNames).contains("build", "test", "run", "hello");
 
             // Test non-existent action
-            assertNull(appInfo.getAction("nonexistent"));
+            assertThat(appInfo.getAction("nonexistent")).isNull();
 
             // Test dependencies are still parsed correctly
-            assertEquals(1, appInfo.dependencies.size());
-            assertTrue(appInfo.dependencies.containsKey("com.example:test-lib"));
-            assertEquals("1.0.0", appInfo.dependencies.get("com.example:test-lib"));
+            assertThat(appInfo.dependencies).hasSize(1);
+            assertThat(appInfo.dependencies).containsKey("com.example:test-lib");
+            assertThat(appInfo.dependencies.get("com.example:test-lib")).isEqualTo("1.0.0");
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -76,11 +73,11 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test no actions
-            assertTrue(appInfo.getActionNames().isEmpty());
-            assertNull(appInfo.getAction("build"));
+            assertThat(appInfo.getActionNames()).isEmpty();
+            assertThat(appInfo.getAction("build")).isNull();
 
             // Test dependencies are still parsed correctly
-            assertEquals(1, appInfo.dependencies.size());
+            assertThat(appInfo.dependencies).hasSize(1);
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -96,9 +93,9 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test no actions and no dependencies
-            assertTrue(appInfo.getActionNames().isEmpty());
-            assertTrue(appInfo.dependencies.isEmpty());
-            assertNull(appInfo.getAction("build"));
+            assertThat(appInfo.getActionNames()).isEmpty();
+            assertThat(appInfo.dependencies).isEmpty();
+            assertThat(appInfo.getAction("build")).isNull();
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -119,14 +116,14 @@ class AppInfoTest {
 
             // Verify the file was written
             Path appYmlPath = tempDir.resolve("app.yml");
-            assertTrue(Files.exists(appYmlPath));
+            assertThat(appYmlPath).exists();
 
             // Read it back and verify
             AppInfo readBack = AppInfo.read();
-            assertEquals("javac -cp {{deps}} *.java", readBack.getAction("build"));
-            assertEquals("java -cp {{deps}} TestRunner", readBack.getAction("test"));
-            assertEquals(2, readBack.getActionNames().size());
-            assertEquals(1, readBack.dependencies.size());
+            assertThat(readBack.getAction("build")).isEqualTo("javac -cp {{deps}} *.java");
+            assertThat(readBack.getAction("test")).isEqualTo("java -cp {{deps}} TestRunner");
+            assertThat(readBack.getActionNames()).hasSize(2);
+            assertThat(readBack.dependencies).hasSize(1);
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -154,12 +151,11 @@ class AppInfoTest {
         try {
             AppInfo appInfo = AppInfo.read();
 
-            assertEquals(
-                    "java -cp {{deps}} -Dprop=value MainClass arg1 arg2",
-                    appInfo.getAction("complex"));
-            assertEquals("echo \"Hello with spaces\"", appInfo.getAction("quoted"));
-            assertTrue(appInfo.getAction("multiline").contains("java -cp {{deps}}"));
-            assertEquals(3, appInfo.getActionNames().size());
+            assertThat(appInfo.getAction("complex"))
+                    .isEqualTo("java -cp {{deps}} -Dprop=value MainClass arg1 arg2");
+            assertThat(appInfo.getAction("quoted")).isEqualTo("echo \"Hello with spaces\"");
+            assertThat(appInfo.getAction("multiline")).contains("java -cp {{deps}}");
+            assertThat(appInfo.getActionNames()).hasSize(3);
         } finally {
             System.setProperty("user.dir", originalDir);
         }

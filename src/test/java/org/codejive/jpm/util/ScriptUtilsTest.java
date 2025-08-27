@@ -1,6 +1,6 @@
 package org.codejive.jpm.util;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -31,7 +31,7 @@ class ScriptUtilsTest {
                         classpath.get(0).toString(),
                         classpath.get(1).toString(),
                         classpath.get(2).toString());
-        assertEquals("java -cp " + expectedClasspath + " MainClass", result);
+        assertThat(result).isEqualTo("java -cp " + expectedClasspath + " MainClass");
     }
 
     @Test
@@ -40,7 +40,7 @@ class ScriptUtilsTest {
         String command = "echo Hello World";
         String result = ScriptUtils.processCommand(command, classpath);
         // Command should remain unchanged since no {{deps}} variable
-        assertEquals("echo Hello World", result);
+        assertThat(result).isEqualTo("echo Hello World");
     }
 
     @Test
@@ -49,7 +49,7 @@ class ScriptUtilsTest {
         String command = "java -cp {{deps}} MainClass";
         String result = ScriptUtils.processCommand(command, classpath);
         // {{deps}} should be replaced with empty string
-        assertEquals("java -cp  MainClass", result);
+        assertThat(result).isEqualTo("java -cp  MainClass");
     }
 
     @Test
@@ -57,7 +57,7 @@ class ScriptUtilsTest {
         String command = "java -cp {{deps}} MainClass";
         String result = ScriptUtils.processCommand(command, null);
         // {{deps}} should be replaced with empty string
-        assertEquals("java -cp  MainClass", result);
+        assertThat(result).isEqualTo("java -cp  MainClass");
     }
 
     @Test
@@ -68,13 +68,13 @@ class ScriptUtilsTest {
 
         // Use the actual path as it would be processed
         String expectedPath = classpath.get(0).toString();
-        assertEquals(
-                "java -cp "
-                        + expectedPath
-                        + " MainClass && java -cp "
-                        + expectedPath
-                        + " TestClass",
-                result);
+        assertThat(result)
+                .isEqualTo(
+                        "java -cp "
+                                + expectedPath
+                                + " MainClass && java -cp "
+                                + expectedPath
+                                + " TestClass");
     }
 
     @Test
@@ -82,20 +82,22 @@ class ScriptUtilsTest {
         boolean result = ScriptUtils.isWindows();
         // The result should match the current OS
         String os = System.getProperty("os.name").toLowerCase();
-        assertEquals(os.contains("win"), result);
+        assertThat(result).isEqualTo(os.contains("win"));
     }
 
     @Test
     void testExecuteScriptSimpleCommand() {
         // Test that executeScript can be called without throwing exceptions
         // We can't easily test the actual execution without mocking ProcessBuilder
-        assertDoesNotThrow(
-                () -> {
-                    // Use a simple command that should work on most systems
-                    List<Path> classpath = Collections.emptyList();
-                    // Note: This test is limited because we can't easily mock ProcessBuilder
-                    // In a real scenario, you might want to use a mocking framework
-                });
+        assertThatCode(
+                        () -> {
+                            // Use a simple command that should work on most systems
+                            List<Path> classpath = Collections.emptyList();
+                            // Note: This test is limited because we can't easily mock
+                            // ProcessBuilder
+                            // In a real scenario, you might want to use a mocking framework
+                        })
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -118,6 +120,7 @@ class ScriptUtilsTest {
         } else {
             expectedClasspath = ".:./libs/*:" + expectedClasspath;
         }
-        assertEquals("java -cp " + expectedClasspath + " -Dmyprop=value MainClass arg1", result);
+        assertThat(result)
+                .isEqualTo("java -cp " + expectedClasspath + " -Dmyprop=value MainClass arg1");
     }
 }
