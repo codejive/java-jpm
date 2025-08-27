@@ -423,15 +423,12 @@ public class Main {
         @Override
         public Integer call() throws Exception {
             try {
-                // Combine regular args and unmatched args for pass-through
-                ArrayList<String> allArgs = new ArrayList<>(doAliasMixin.args);
-                allArgs.addAll(unmatchedArgs);
-
+                // Use only unmatched args for pass-through to preserve ordering
                 return Jpm.builder()
                         .directory(doAliasMixin.depsMixin.directory)
                         .noLinks(doAliasMixin.depsMixin.noLinks)
                         .build()
-                        .executeAction(actionName(), allArgs);
+                        .executeAction(actionName(), unmatchedArgs);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 return 1;
@@ -496,12 +493,7 @@ public class Main {
     static class DoAliasMixin {
         @Mixin DepsMixin depsMixin;
 
-        @Parameters(
-                paramLabel = "arguments",
-                description = "Optional arguments to be passed to the action",
-                arity = "0..*",
-                index = "0..*")
-        ArrayList<String> args = new ArrayList<>();
+        // Remove @Parameters - let @Unmatched in DoAlias handle everything
     }
 
     static class ArtifactsMixin {
