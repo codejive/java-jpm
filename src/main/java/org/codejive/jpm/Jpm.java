@@ -12,10 +12,12 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 public class Jpm {
     private final Path directory;
     private final boolean noLinks;
+    private final boolean verbose;
 
-    private Jpm(Path directory, boolean noLinks) {
+    private Jpm(Path directory, boolean noLinks, boolean verbose) {
         this.directory = directory;
         this.noLinks = noLinks;
+        this.verbose = verbose;
     }
 
     /**
@@ -31,6 +33,7 @@ public class Jpm {
     public static class Builder {
         private Path directory;
         private boolean noLinks;
+        private boolean verbose;
 
         private Builder() {}
 
@@ -57,12 +60,23 @@ public class Jpm {
         }
 
         /**
+         * Set whether to enable verbose output or not.
+         *
+         * @param verbose Whether to enable verbose output or not.
+         * @return The builder instance for chaining.
+         */
+        public Builder verbose(boolean verbose) {
+            this.verbose = verbose;
+            return this;
+        }
+
+        /**
          * Builds the {@link Jpm} instance.
          *
          * @return A {@link Jpm} instance.
          */
         public Jpm build() {
-            return new Jpm(directory, noLinks);
+            return new Jpm(directory, noLinks, verbose);
         }
     }
 
@@ -196,7 +210,7 @@ public class Jpm {
             classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
         }
 
-        return ScriptUtils.executeScript(command, args, classpath);
+        return ScriptUtils.executeScript(command, args, classpath, true);
     }
 
     /**

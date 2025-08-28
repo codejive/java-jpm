@@ -46,18 +46,51 @@ class ScriptUtilsTest {
     @Test
     void testProcessCommandWithEmptyClasspath() throws Exception {
         List<Path> classpath = Collections.emptyList();
-        String command = "java -cp {{deps}} MainClass";
+        String command = "java -cp \"{{deps}}\" MainClass";
         String result = ScriptUtils.processCommand(command, classpath);
         // {{deps}} should be replaced with empty string
-        assertThat(result).isEqualTo("java -cp  MainClass");
+        assertThat(result).isEqualTo("java -cp \"\" MainClass");
     }
 
     @Test
     void testProcessCommandWithNullClasspath() throws Exception {
-        String command = "java -cp {{deps}} MainClass";
+        String command = "java -cp \"{{deps}}\" MainClass";
         String result = ScriptUtils.processCommand(command, null);
         // {{deps}} should be replaced with empty string
-        assertThat(result).isEqualTo("java -cp  MainClass");
+        assertThat(result).isEqualTo("java -cp \"\" MainClass");
+    }
+
+    @Test
+    void testProcessCommandWithPathTokens() throws Exception {
+        String command = "java -cp .{/}libs{:}.{/}ext{:}{~}{/}usrlibs MainClass";
+        String result = ScriptUtils.processCommand(command, null);
+        String expectedPath =
+                ScriptUtils.isWindows()
+                        ? ".\\libs;.\\ext;" + System.getProperty("user.home") + "\\usrlibs"
+                        : "./libs:./ext:~/usrlibs";
+        assertThat(result).isEqualTo("java -cp " + expectedPath + " MainClass");
+    }
+
+    @Test
+    void testProcessCommandWithPathReplacement() throws Exception {
+        String command = "java -cp {./libs:./ext:~/usrlibs} MainClass";
+        String result = ScriptUtils.processCommand(command, null);
+        String expectedPath =
+                ScriptUtils.isWindows()
+                        ? ".\\libs;.\\ext;" + System.getProperty("user.home") + "\\usrlibs"
+                        : "./libs:./ext:~/usrlibs";
+        assertThat(result).isEqualTo("java -cp " + expectedPath + " MainClass");
+    }
+
+    @Test
+    void testProcessCommandWithPathReplacement2() throws Exception {
+        String command = "java -cp {~/usrlibs:./libs:./ext} MainClass";
+        String result = ScriptUtils.processCommand(command, null);
+        String expectedPath =
+                ScriptUtils.isWindows()
+                        ? System.getProperty("user.home") + "\\usrlibs;.\\libs;.\\ext"
+                        : "~/usrlibs:./libs:./ext";
+        assertThat(result).isEqualTo("java -cp " + expectedPath + " MainClass");
     }
 
     @Test

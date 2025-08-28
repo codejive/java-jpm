@@ -324,6 +324,7 @@ public class Main {
                             + "Example:\n  jpm do build\n  jpm do test\n")
     static class Do implements Callable<Integer> {
         @Mixin DepsMixin depsMixin;
+        @Mixin QuietMixin quietMixin;
 
         @Option(
                 names = {"-l", "--list"},
@@ -357,9 +358,9 @@ public class Main {
                                     .build()
                                     .listActions();
                     if (actionNames.isEmpty()) {
-                        System.out.println("No actions defined in app.yml");
+                        if (!quietMixin.quiet) System.out.println("No actions defined in app.yml");
                     } else {
-                        System.out.println("Available actions:");
+                        if (!quietMixin.quiet) System.out.println("Available actions:");
                         actionNames.forEach(n -> System.out.println("   " + n));
                     }
                 } else {
@@ -398,6 +399,7 @@ public class Main {
                                 Jpm.builder()
                                         .directory(depsMixin.directory)
                                         .noLinks(depsMixin.noLinks)
+                                        .verbose(!quietMixin.quiet)
                                         .build()
                                         .executeAction(action, args);
                         if (exitCode != 0) {

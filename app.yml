@@ -11,5 +11,5 @@ dependencies:
 actions:
   clean: ".{/}mvnw clean"
   build: ".{/}mvnw spotless:apply package -DskipTests"
-  run: "java -jar target{/}jpm-0.4.1-cli.jar"
+  run: "{./target/binary/bin/jpm}"
   test: ".{/}mvnw test"

@@ -105,7 +105,7 @@ class MainIntegrationTest {
 
             assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertThat(output.contains("Available actions:")).isTrue();
+            assertThat(output).contains("Available actions:");
         }
     }
 
@@ -120,7 +120,7 @@ class MainIntegrationTest {
 
             assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertThat(output.contains("No actions defined in app.yml")).isTrue();
+            assertThat(output).contains("No actions defined in app.yml");
         }
     }
 
@@ -133,7 +133,7 @@ class MainIntegrationTest {
 
             assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
-            assertThat(output.contains("No actions defined in app.yml")).isTrue();
+            assertThat(output).contains("No actions defined in app.yml");
         }
     }
 
@@ -147,8 +147,8 @@ class MainIntegrationTest {
 
             assertThat(exitCode).isEqualTo(1);
             String errorOutput = capture.getErr();
-            assertThat(errorOutput.contains("Action name is required")).isTrue();
-            assertThat(errorOutput.contains("Use --list to see available actions")).isTrue();
+            assertThat(errorOutput)
+                    .contains("Action name is required", "Use --list to see available actions");
         }
     }
 
@@ -162,10 +162,9 @@ class MainIntegrationTest {
 
             assertThat(exitCode).isEqualTo(1);
             String errorOutput = capture.getErr();
-            assertThat(
-                            errorOutput.contains(
-                                    "Action 'nonexistent' not found in app.yml. Use --list to see available actions."))
-                    .isTrue();
+            assertThat(errorOutput)
+                    .contains(
+                            "Action 'nonexistent' not found in app.yml. Use --list to see available actions.");
         }
     }
 
@@ -215,7 +214,7 @@ class MainIntegrationTest {
             // Should fail with exit code 1 when action is not found
             assertThat(exitCode).isEqualTo(1);
             String errorOutput = capture.getErr();
-            assertThat(errorOutput.contains("Action 'build' not found in app.yml")).isTrue();
+            assertThat(errorOutput).contains("Action 'build' not found in app.yml");
         }
     }
 
@@ -230,7 +229,7 @@ class MainIntegrationTest {
             int exitCode = cmd.execute("do", "hello");
             assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
             String output = capture.getOut();
-            assertThat(output.contains("Hello World")).isTrue();
+            assertThat(output).contains("Hello World");
         }
     }
 
@@ -256,12 +255,11 @@ class MainIntegrationTest {
             assertThat(exitCode).isEqualTo(0);
             String output = capture.getOut();
             // The run action should execute and include the classpath in the output
-            assertThat(output).contains("running... .").contains("libs").contains("--foo bar");
+            assertThat(output).contains("running... .", "libs", "--foo bar");
         }
     }
 
     private void createAppYml() throws IOException {
-        // Use platform-specific command for simple action that works on both Windows and Unix
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
@@ -280,7 +278,6 @@ class MainIntegrationTest {
     }
 
     private void createAppYmlWithoutBuildAction() throws IOException {
-        // Use platform-specific command for simple action that works on both Windows and Unix
         String yamlContent =
                 "dependencies:\n"
                         + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"

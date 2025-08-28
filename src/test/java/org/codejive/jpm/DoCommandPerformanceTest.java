@@ -47,7 +47,10 @@ class DoCommandPerformanceTest {
         // Mock ScriptUtils to verify classpath is empty when no {{deps}} variable
         try (MockedStatic<ScriptUtils> mockedScriptUtils = Mockito.mockStatic(ScriptUtils.class)) {
             mockedScriptUtils
-                    .when(() -> ScriptUtils.executeScript(anyString(), any(List.class), any()))
+                    .when(
+                            () ->
+                                    ScriptUtils.executeScript(
+                                            anyString(), any(List.class), any(), anyBoolean()))
                     .thenReturn(0);
 
             CommandLine cmd = Main.getCommandLine();
@@ -61,7 +64,8 @@ class DoCommandPerformanceTest {
                             ScriptUtils.executeScript(
                                     eq("true"),
                                     eq(Collections.emptyList()),
-                                    eq(Collections.emptyList())),
+                                    eq(Collections.emptyList()),
+                                    eq(true)),
                     times(1));
         }
     }
@@ -78,7 +82,10 @@ class DoCommandPerformanceTest {
 
         try (MockedStatic<ScriptUtils> mockedScriptUtils = Mockito.mockStatic(ScriptUtils.class)) {
             mockedScriptUtils
-                    .when(() -> ScriptUtils.executeScript(anyString(), any(List.class), any()))
+                    .when(
+                            () ->
+                                    ScriptUtils.executeScript(
+                                            anyString(), any(List.class), any(), anyBoolean()))
                     .thenReturn(0);
 
             CommandLine cmd = Main.getCommandLine();
@@ -88,7 +95,10 @@ class DoCommandPerformanceTest {
             mockedScriptUtils.verify(
                     () ->
                             ScriptUtils.executeScript(
-                                    contains("{{deps}}"), eq(Collections.emptyList()), any()),
+                                    contains("{{deps}}"),
+                                    eq(Collections.emptyList()),
+                                    any(),
+                                    eq(true)),
                     times(1));
 
             mockedScriptUtils.clearInvocations();
@@ -100,7 +110,8 @@ class DoCommandPerformanceTest {
                             ScriptUtils.executeScript(
                                     eq("java -cp ${DEPS} MainClass"),
                                     eq(Collections.emptyList()),
-                                    eq(Collections.emptyList())),
+                                    eq(Collections.emptyList()),
+                                    eq(true)),
                     times(1));
 
             mockedScriptUtils.clearInvocations();
@@ -112,7 +123,8 @@ class DoCommandPerformanceTest {
                             ScriptUtils.executeScript(
                                     eq("java -cp mydeps MainClass"),
                                     eq(Collections.emptyList()),
-                                    eq(Collections.emptyList())),
+                                    eq(Collections.emptyList()),
+                                    eq(true)),
                     times(1));
         }
     }

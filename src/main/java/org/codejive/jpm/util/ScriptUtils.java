@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -16,13 +18,15 @@ public class ScriptUtils {
      * Executes a script command with variable substitution and path conversion.
      *
      * @param command The command to execute
-     * @param args
+     * @param args The arguments to pass to the command
      * @param classpath The classpath to use for {{deps}} substitution
+     * @param verbose If true, prints the command before execution
      * @return The exit code of the executed command
      * @throws IOException if an error occurred during execution
      * @throws InterruptedException if the execution was interrupted
      */
-    public static int executeScript(String command, List<String> args, List<Path> classpath)
+    public static int executeScript(
+            String command, List<String> args, List<Path> classpath, boolean verbose)
             throws IOException, InterruptedException {
         if (args != null && !args.isEmpty()) {
             command +=
@@ -32,6 +36,9 @@ public class ScriptUtils {
         }
 
         String processedCommand = processCommand(command, classpath);
+        if (verbose) {
+            System.out.println("> " + processedCommand);
+        }
         String[] commandTokens =
                 isWindows()
                         ? new String[] {"cmd.exe", "/c", processedCommand}
@@ -69,8 +76,46 @@ public class ScriptUtils {
             }
             result = result.replace("{{deps}}", classpathStr);
         }
+
+        // Find all occurrences of {./...} and {~/...} and replace them with os paths
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\{([.~]/[^}]*)}");
+        java.util.regex.Matcher matcher = pattern.matcher(result);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            String path = matcher.group(1);
+            String replacedPath;
+            if (isWindows()) {
+                String[] cp = path.split(":");
+                replacedPath =
+                        Arrays.stream(cp)
+                                .map(
+                                        p -> {
+                                            if (p.startsWith("~/")) {
+                                                return Paths.get(
+                                                                System.getProperty("user.home"),
+                                                                p.substring(2))
+                                                        .toString();
+                                            } else {
+                                                return Paths.get(p).toString();
+                                            }
+                                        })
+                                .collect(Collectors.joining(File.pathSeparator));
+                replacedPath = replacedPath.replace("\\", "\\\\");
+            } else {
+                // If we're not on Windows, we assume the path is already correct
+                replacedPath = path;
+            }
+            matcher.appendReplacement(sb, replacedPath);
+        }
+        matcher.appendTail(sb);
+        result = sb.toString();
+
         result = result.replace("{/}", File.separator);
         result = result.replace("{:}", File.pathSeparator);
+        result =
+                result.replace(
+                        "{~}",
+                        isWindows() ? Paths.get(System.getProperty("user.home")).toString() : "~");
 
         return result;
     }

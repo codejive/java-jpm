@@ -52,8 +52,7 @@ class AppInfoTest {
 
             // Test dependencies are still parsed correctly
             assertThat(appInfo.dependencies).hasSize(1);
-            assertThat(appInfo.dependencies).containsKey("com.example:test-lib");
-            assertThat(appInfo.dependencies.get("com.example:test-lib")).isEqualTo("1.0.0");
+            assertThat(appInfo.dependencies).containsEntry("com.example:test-lib", "1.0.0");
         } finally {
             System.setProperty("user.dir", originalDir);
         }
