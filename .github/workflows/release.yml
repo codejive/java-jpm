@@ -42,20 +42,18 @@ jobs:
         run: ./mvnw --no-transfer-progress --batch-mode clean deploy jreleaser:assemble -Prelease
 
       - name: Commit & Push changes
-        if: false
         uses: actions-js/push@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           message: "ci: Releasing version ${{ github.event.inputs.version }}"
 
       - name: Stage release
-        run: ./mvnw jreleaser:full-release -Djreleaser.dry.run
+        run: ./mvnw jreleaser:full-release
 
       - name: Set development version
         run: ./mvnw --no-transfer-progress --batch-mode build-helper:parse-version versions:set -DnewVersion=\${parsedVersion.majorVersion}.\${parsedVersion.minorVersion}.\${parsedVersion.nextIncrementalVersion}-SNAPSHOT versions:commit
 
       - name: Commit & Push changes
-        if: false
         uses: actions-js/push@master
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
@@ -65,7 +63,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jreleaser-release=output
+          name: jreleaser-release-output
           path: |
             target/surefire-reports
             target/jreleaser/trace.log
