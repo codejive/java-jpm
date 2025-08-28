@@ -11,6 +11,8 @@ jobs:
   release:
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     env:
       JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.GPG_PUBLIC_KEY }}
@@ -43,7 +45,7 @@ jobs:
         if: false
         uses: actions-js/push@master
         with:
-          github_token: ${{ secrets.JRELEASER_GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           message: "ci: Releasing version ${{ github.event.inputs.version }}"
 
       - name: Stage release
@@ -56,7 +58,7 @@ jobs:
         if: false
         uses: actions-js/push@master
         with:
-          github_token: ${{ secrets.JRELEASER_GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           message: "ci: Prepare for next development iteration"
 
       - name: JReleaser release output
