@@ -78,6 +78,7 @@ public class ScriptUtils {
         }
 
         // Find all occurrences of {./...} and {~/...} and replace them with os paths
+        // This also handles classpath constructs with multiple paths separated by :
         java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("\\{([.~]/[^}]*)}");
         java.util.regex.Matcher matcher = pattern.matcher(result);
         StringBuilder sb = new StringBuilder();
@@ -110,12 +111,18 @@ public class ScriptUtils {
         matcher.appendTail(sb);
         result = sb.toString();
 
+        // Special replacements for dealing with paths and classpath separators
+        // in cross-platform way
         result = result.replace("{/}", File.separator);
         result = result.replace("{:}", File.pathSeparator);
         result =
                 result.replace(
                         "{~}",
                         isWindows() ? Paths.get(System.getProperty("user.home")).toString() : "~");
+
+        // Special replacement {;} for dealing with multi-command actions in a
+        // cross-platform way
+        result = result.replace("{;}", isWindows() ? "&" : ";");
 
         return result;
     }

@@ -143,6 +143,7 @@ Actions support several variable substitution features for cross-platform compat
 - **`{~}`** - Replaced with the user's home directory (The actual path on Windows, `~` on Linux/Mac)
 - **`{./path/to/file}`** - Converts relative paths to platform-specific format
 - **`{./libs:./ext:~/usrlibs}`** - Converts entire class paths to platform-specific format
+- **`{;}`** - For use with multi-command actions (`&` on Windows, `;` on Linux/Mac). Really not _that_ useful, you can use `&&` instead which works on all platforms
 
 Example with cross-platform compatibility:
 
