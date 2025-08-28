@@ -4,8 +4,8 @@
 //DEPS org.yaml:snakeyaml:2.3
 //DEPS org.jline:jline-console-ui:3.29.0 org.jline:jline-terminal-jni:3.29.0
 //DEPS org.slf4j:slf4j-api:2.0.13 org.slf4j:slf4j-simple:2.0.13
-//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/ResolverUtils.java util/SearchUtils.java
-//SOURCES util/SearchResult.java util/SyncStats.java util/Version.java
+//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/ResolverUtils.java util/ScriptUtils.java
+//SOURCES util/SearchResult.java util/SearchUtils.java util/SyncStats.java util/Version.java
 // spotless:on
 
 package org.codejive.jpm;
