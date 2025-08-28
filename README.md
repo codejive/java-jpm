@@ -89,6 +89,73 @@ to get the required dependencies to run the code.
 _NB: We could have used `jpm copy` instead of `jpm install` to copy the dependencies but that would not have created
 the `app.yml` file._
 
+## Actions
+
+The `app.yml` file doesn't just track dependencies - it can also define custom actions that can be executed with the `jpm do` command or through convenient alias commands.
+
+### Defining Actions
+
+Actions are defined in the `actions` section of your `app.yml` file:
+
+```yaml
+dependencies:
+  com.github.lalyos:jfiglet:0.0.9
+
+actions:
+  build: "javac -cp {{deps}} *.java"
+  run: "java -cp {{deps}} HelloWorld"
+  test: "java -cp {{deps}} TestRunner"
+  clean: "rm -f *.class"
+```
+
+### Executing Actions
+
+You can execute actions using the `jpm do` command:
+
+```shell
+$ jpm do build
+$ jpm do run
+$ jpm do --list    # Lists all available actions
+```
+
+Or use the convenient alias commands:
+
+```shell
+$ jpm build        # Executes the 'build' action
+$ jpm run          # Executes the 'run' action
+$ jpm test         # Executes the 'test' action
+$ jpm clean        # Executes the 'clean' action
+```
+
+Alias commands can accept additional arguments that will be passed through to the underlying action:
+
+```shell
+$ jpm run --verbose debug    # Passes '--verbose debug' to the run action
+```
+
+### Variable Substitution
+
+Actions support several variable substitution features for cross-platform compatibility:
+
+- **`{{deps}}`** - Replaced with the full classpath of all dependencies
+- **`{/}`** - Replaced with the file separator (`\` on Windows, `/` on Unix)
+- **`{:}`** - Replaced with the path separator (`;` on Windows, `:` on Unix)
+- **`{./path/to/file}`** - Converts relative paths to platform-specific format
+- **`{~/path/to/file}`** - Converts home directory paths to platform-specific format
+
+Example with cross-platform compatibility:
+
+```yaml
+actions:
+  build: "javac -cp {{deps}} -d {./target/classes} src{/}*.java"
+  run: "java -cp {{deps}}{:}{./target/classes} Main"
+  test: "java -cp {{deps}}{:}{./target/classes} org.junit.runner.JUnitCore TestSuite"
+```
+
+### Performance Optimization
+
+The `{{deps}}` variable substitution is only performed when needed - if your action doesn't contain `{{deps}}`, jpm won't resolve the classpath, making execution faster for simple actions that don't require dependencies.
+
 ## Installation
 
 For now the simplest way to install `jpm` is to use [JBang](https://www.jbang.dev/download/):
