@@ -34,6 +34,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.Unmatched;
 
 /** Main class for the jpm command line tool. */
 @Command(
@@ -45,7 +46,12 @@ import picocli.CommandLine.Parameters;
             Main.Copy.class,
             Main.Search.class,
             Main.Install.class,
-            Main.PrintPath.class
+            Main.PrintPath.class,
+            Main.Do.class,
+            Main.Clean.class,
+            Main.Build.class,
+            Main.Run.class,
+            Main.Test.class
         })
 public class Main {
 
@@ -71,8 +77,8 @@ public class Main {
         public Integer call() throws Exception {
             SyncStats stats =
                     Jpm.builder()
-                            .directory(artifactsMixin.copyMixin.directory)
-                            .noLinks(artifactsMixin.copyMixin.noLinks)
+                            .directory(artifactsMixin.depsMixin.directory)
+                            .noLinks(artifactsMixin.depsMixin.noLinks)
                             .build()
                             .copy(artifactsMixin.artifactNames, sync);
             if (!quietMixin.quiet) {
@@ -93,7 +99,7 @@ public class Main {
                             + "Example:\n  jpm search httpclient\n")
     static class Search implements Callable<Integer> {
         @Mixin QuietMixin quietMixin;
-        @Mixin CopyMixin copyMixin;
+        @Mixin DepsMixin depsMixin;
 
         @Option(
                 names = {"-i", "--interactive"},
@@ -132,8 +138,8 @@ public class Main {
                         if ("install".equals(artifactAction)) {
                             SyncStats stats =
                                     Jpm.builder()
-                                            .directory(copyMixin.directory)
-                                            .noLinks(copyMixin.noLinks)
+                                            .directory(depsMixin.directory)
+                                            .noLinks(depsMixin.noLinks)
                                             .build()
                                             .install(new String[] {selectedArtifact});
                             if (!quietMixin.quiet) {
@@ -142,8 +148,8 @@ public class Main {
                         } else if ("copy".equals(artifactAction)) {
                             SyncStats stats =
                                     Jpm.builder()
-                                            .directory(copyMixin.directory)
-                                            .noLinks(copyMixin.noLinks)
+                                            .directory(depsMixin.directory)
+                                            .noLinks(depsMixin.noLinks)
                                             .build()
                                             .copy(new String[] {selectedArtifact}, false);
                             if (!quietMixin.quiet) {
@@ -174,8 +180,8 @@ public class Main {
         String[] search(String artifactPattern) {
             try {
                 return Jpm.builder()
-                        .directory(copyMixin.directory)
-                        .noLinks(copyMixin.noLinks)
+                        .directory(depsMixin.directory)
+                        .noLinks(depsMixin.noLinks)
                         .build()
                         .search(artifactPattern, Math.min(max, 200));
             } catch (IOException e) {
@@ -271,8 +277,8 @@ public class Main {
         public Integer call() throws Exception {
             SyncStats stats =
                     Jpm.builder()
-                            .directory(optionalArtifactsMixin.copyMixin.directory)
-                            .noLinks(optionalArtifactsMixin.copyMixin.noLinks)
+                            .directory(optionalArtifactsMixin.depsMixin.directory)
+                            .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
                             .build()
                             .install(optionalArtifactsMixin.artifactNames);
             if (!quietMixin.quiet) {
@@ -296,8 +302,8 @@ public class Main {
         public Integer call() throws Exception {
             List<Path> files =
                     Jpm.builder()
-                            .directory(optionalArtifactsMixin.copyMixin.directory)
-                            .noLinks(optionalArtifactsMixin.copyMixin.noLinks)
+                            .directory(optionalArtifactsMixin.depsMixin.directory)
+                            .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
                             .build()
                             .path(optionalArtifactsMixin.artifactNames);
             if (!files.isEmpty()) {
@@ -311,7 +317,168 @@ public class Main {
         }
     }
 
-    static class CopyMixin {
+    @Command(
+            name = "do",
+            description =
+                    "Executes an action command defined in the app.yml file.\n\n"
+                            + "Example:\n  jpm do build\n  jpm do test --arg verbose\n")
+    static class Do implements Callable<Integer> {
+        @Mixin DepsMixin depsMixin;
+        @Mixin QuietMixin quietMixin;
+
+        @Option(
+                names = {"-l", "--list"},
+                description = "List all available actions",
+                defaultValue = "false")
+        private boolean list;
+
+        @Parameters(
+                paramLabel = "action",
+                description = "Name of the action to execute as defined in app.yml",
+                arity = "0..*",
+                index = "0")
+        private String actionName;
+
+        @Parameters(
+                paramLabel = "actionsAndArguments",
+                description =
+                        "Optional additional actions and/or arguments to be passed to the action(s)",
+                arity = "0..*",
+                index = "1..*")
+        private ArrayList<String> actsAndArgs = new ArrayList<>();
+
+        @Override
+        public Integer call() throws Exception {
+            try {
+                if (list) {
+                    List<String> actionNames =
+                            Jpm.builder()
+                                    .directory(depsMixin.directory)
+                                    .noLinks(depsMixin.noLinks)
+                                    .build()
+                                    .listActions();
+                    if (actionNames.isEmpty()) {
+                        if (!quietMixin.quiet) System.out.println("No actions defined in app.yml");
+                    } else {
+                        if (!quietMixin.quiet) System.out.println("Available actions:");
+                        actionNames.forEach(n -> System.out.println("   " + n));
+                    }
+                } else {
+                    if (actionName == null || actionName.isEmpty()) {
+                        System.err.println(
+                                "Action name is required. Use --list to see available actions.");
+                        return 1;
+                    }
+                    // Split the full arguments list in multiple actions and their arguments
+                    int idx = 0;
+                    actsAndArgs.add(0, actionName);
+                    while (idx < actsAndArgs.size()) {
+                        String action = actsAndArgs.get(idx);
+                        if (action.startsWith("-")) {
+                            System.err.println(
+                                    "Unexpected argument, was expecting an action name: " + action);
+                            return 1;
+                        }
+                        idx++;
+                        List<String> args = new ArrayList<>();
+                        while (idx < actsAndArgs.size() && actsAndArgs.get(idx).startsWith("-")) {
+                            String opt = actsAndArgs.get(idx);
+                            if (opt.equals("-a") || opt.equals("--arg")) {
+                                args.add(actsAndArgs.get(++idx));
+                            } else if (opt.startsWith("-a=") || opt.startsWith("--arg=")) {
+                                args.add(opt.substring(opt.indexOf('=') + 1));
+                            } else {
+                                System.err.println(
+                                        "Unexpected argument, was expecting an action argument like '-a' or '--arg', not: "
+                                                + opt);
+                                return 1;
+                            }
+                            idx++;
+                        }
+                        int exitCode =
+                                Jpm.builder()
+                                        .directory(depsMixin.directory)
+                                        .noLinks(depsMixin.noLinks)
+                                        .verbose(!quietMixin.quiet)
+                                        .build()
+                                        .executeAction(action, args);
+                        if (exitCode != 0) {
+                            return exitCode;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                return 1;
+            }
+            return 0;
+        }
+    }
+
+    abstract static class DoAlias implements Callable<Integer> {
+        @Mixin DepsMixin depsMixin;
+
+        @Unmatched List<String> args = new ArrayList<>();
+
+        abstract String actionName();
+
+        @Override
+        public Integer call() throws Exception {
+            try {
+                // Use only unmatched args for pass-through to preserve ordering
+                return Jpm.builder()
+                        .directory(depsMixin.directory)
+                        .noLinks(depsMixin.noLinks)
+                        .build()
+                        .executeAction(actionName(), args);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                return 1;
+            }
+        }
+    }
+
+    @Command(
+            name = "clean",
+            description = "Executes the 'clean' action as defined in the app.yml file.")
+    static class Clean extends DoAlias {
+        @Override
+        String actionName() {
+            return "clean";
+        }
+    }
+
+    @Command(
+            name = "build",
+            description = "Executes the 'build' action as defined in the app.yml file.")
+    static class Build extends DoAlias {
+        @Override
+        String actionName() {
+            return "build";
+        }
+    }
+
+    @Command(
+            name = "run",
+            description = "Executes the 'run' action as defined in the app.yml file.")
+    static class Run extends DoAlias {
+        @Override
+        String actionName() {
+            return "run";
+        }
+    }
+
+    @Command(
+            name = "test",
+            description = "Executes the 'test' action as defined in the app.yml file.")
+    static class Test extends DoAlias {
+        @Override
+        String actionName() {
+            return "test";
+        }
+    }
+
+    static class DepsMixin {
         @Option(
                 names = {"-d", "--directory"},
                 description = "Directory to copy artifacts to",
@@ -326,7 +493,7 @@ public class Main {
     }
 
     static class ArtifactsMixin {
-        @Mixin CopyMixin copyMixin;
+        @Mixin DepsMixin depsMixin;
 
         @Parameters(
                 paramLabel = "artifacts",
@@ -337,7 +504,7 @@ public class Main {
     }
 
     static class OptionalArtifactsMixin {
-        @Mixin CopyMixin copyMixin;
+        @Mixin DepsMixin depsMixin;
 
         @Parameters(
                 paramLabel = "artifacts",
@@ -361,17 +528,19 @@ public class Main {
                 (Integer) stats.copied, (Integer) stats.updated, (Integer) stats.deleted);
     }
 
+    public static CommandLine getCommandLine() {
+        return new CommandLine(new Main())
+                .setStopAtPositional(true)
+                .setAllowOptionsAsOptionParameters(true)
+                .setAllowSubcommandsAsOptionParameters(true);
+    }
+
     /**
      * Main entry point for the jpm command line tool.
      *
      * @param args The command line arguments.
      */
     public static void main(String... args) {
-        if (args.length == 0) {
-            System.err.println(
-                    "Running 'jpm search --interactive', try 'jpm --help' for more options");
-            args = new String[] {"search", "--interactive"};
-        }
-        new CommandLine(new Main()).execute(args);
+        getCommandLine().execute(args);
     }
 }

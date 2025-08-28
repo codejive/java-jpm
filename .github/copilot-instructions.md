@@ -84,7 +84,7 @@ Always manually validate jpm functionality after making changes:
 
 ### Important Files
 - `pom.xml` - Maven configuration with Spotless formatting, Shade plugin, Appassembler
-- `app.yml` - Example dependency configuration (also created by jpm install)
+- `app.yml` - jpm's actual runtime dependencies and actions (NOT an example file). Dependencies should be kept up-to-date with the (non-test) dependencies in pom.xml
 - `RELEASE.md` - Release process documentation
 - `.gitignore` - Excludes target/, deps/, IDE files
 

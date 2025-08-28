@@ -89,6 +89,76 @@ to get the required dependencies to run the code.
 _NB: We could have used `jpm copy` instead of `jpm install` to copy the dependencies but that would not have created
 the `app.yml` file._
 
+## Actions
+
+The `app.yml` file doesn't just track dependencies - it can also define custom actions that can be executed with the `jpm do` command or through convenient alias commands.
+
+### Defining Actions
+
+Actions are defined in the `actions` section of your `app.yml` file:
+
+```yaml
+dependencies:
+  com.github.lalyos:jfiglet:0.0.9
+
+actions:
+  build: "javac -cp {{deps}} *.java"
+  run: "java -cp {{deps}} HelloWorld"
+  test: "java -cp {{deps}} TestRunner"
+  clean: "rm -f *.class"
+```
+
+### Executing Actions
+
+You can execute actions using the `jpm do` command:
+
+```shell
+$ jpm do build
+$ jpm do run
+$ jpm do --list    # Lists all available actions
+```
+
+Or use the convenient alias commands:
+
+```shell
+$ jpm build        # Executes the 'build' action
+$ jpm run          # Executes the 'run' action
+$ jpm test         # Executes the 'test' action
+$ jpm clean        # Executes the 'clean' action
+```
+
+Alias commands can accept additional arguments that will be passed through to the underlying action:
+
+```shell
+$ jpm run --verbose debug    # Passes '--verbose debug' to the run action
+```
+
+### Variable Substitution
+
+Actions support several variable substitution features for cross-platform compatibility:
+
+- **`{{deps}}`** - Replaced with the full classpath of all dependencies
+- **`{/}`** - Replaced with the file separator (`\` on Windows, `/` on Linux/Mac)
+- **`{:}`** - Replaced with the path separator (`;` on Windows, `:` on Linux/Mac)
+- **`{~}`** - Replaced with the user's home directory (The actual path on Windows, `~` on Linux/Mac)
+- **`{./path/to/file}`** - Converts relative paths to platform-specific format
+- **`{./libs:./ext:~/usrlibs}`** - Converts entire class paths to platform-specific format
+
+Example with cross-platform compatibility:
+
+```yaml
+actions:
+  build: "javac -cp {{deps}} -d {./target/classes} src{/}*.java"
+  run: "java -cp {{deps}}{:}{./target/classes} Main"
+  test: "java -cp {{deps}}{:}{./target/classes} org.junit.runner.JUnitCore TestSuite"
+```
+
+NB: The `{{deps}}` variable substitution is only performed when needed - if your action doesn't contain `{{deps}}`, jpm won't resolve the classpath, making execution faster for simple actions that don't require dependencies.
+
+NB2: These actions are just a very simple convenience feature. For a much more full-featured cross-platform action runner I recommend taking a look at:
+
+ - [Just](https://github.com/casey/just) - Just a command runner
+
 ## Installation
 
 For now the simplest way to install `jpm` is to use [JBang](https://www.jbang.dev/download/):
@@ -132,8 +202,8 @@ Commands:
                 dependencies to the target directory while at the same time
                 removing any artifacts that are no longer needed (ie the ones
                 that are not mentioned in the app.yml file). If no artifacts
-                are passed the app.yml file will be left untouched and only
-                the existing dependencies in the file will be copied.
+                are passed the app.yml file will be left untouched and only the
+                existing dependencies in the file will be copied.
 
               Example:
                 jpm install org.apache.httpcomponents:httpclient:4.5.14
@@ -145,6 +215,18 @@ Commands:
 
               Example:
                 jpm path org.apache.httpcomponents:httpclient:4.5.14
+
+  do          Executes an action command defined in the app.yml file. Actions
+                can use variable substitution for classpath.
+
+              Example:
+                jpm do build
+                jpm do test
+
+  clean       Executes the 'clean' action as defined in the app.yml file.
+  build       Executes the 'build' action as defined in the app.yml file.
+  run         Executes the 'run' action as defined in the app.yml file.
+  test        Executes the 'test' action as defined in the app.yml file.
 ```
 
 ## Development

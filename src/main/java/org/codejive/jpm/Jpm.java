@@ -12,10 +12,12 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 public class Jpm {
     private final Path directory;
     private final boolean noLinks;
+    private final boolean verbose;
 
-    private Jpm(Path directory, boolean noLinks) {
+    private Jpm(Path directory, boolean noLinks, boolean verbose) {
         this.directory = directory;
         this.noLinks = noLinks;
+        this.verbose = verbose;
     }
 
     /**
@@ -31,6 +33,7 @@ public class Jpm {
     public static class Builder {
         private Path directory;
         private boolean noLinks;
+        private boolean verbose;
 
         private Builder() {}
 
@@ -57,12 +60,23 @@ public class Jpm {
         }
 
         /**
+         * Set whether to enable verbose output or not.
+         *
+         * @param verbose Whether to enable verbose output or not.
+         * @return The builder instance for chaining.
+         */
+        public Builder verbose(boolean verbose) {
+            this.verbose = verbose;
+            return this;
+        }
+
+        /**
          * Builds the {@link Jpm} instance.
          *
          * @return A {@link Jpm} instance.
          */
         public Jpm build() {
-            return new Jpm(directory, noLinks);
+            return new Jpm(directory, noLinks, verbose);
         }
     }
 
@@ -165,6 +179,49 @@ public class Jpm {
             deps = appInfo.getDependencyGAVs();
         }
         return deps;
+    }
+
+    /**
+     * Executes an action defined in app.yml file.
+     *
+     * @param actionName The name of the action to execute (null to list actions)
+     * @return An integer containing the exit result of the action
+     * @throws IllegalArgumentException If the action name is not provided or not found
+     * @throws IOException If an error occurred during the operation
+     * @throws DependencyResolutionException If an error occurred during dependency resolution
+     * @throws InterruptedException If the action execution was interrupted
+     */
+    public int executeAction(String actionName, List<String> args)
+            throws IOException, DependencyResolutionException, InterruptedException {
+        AppInfo appInfo = AppInfo.read();
+
+        // Get the action command
+        String command = appInfo.getAction(actionName);
+        if (command == null) {
+            throw new IllegalArgumentException(
+                    "Action '"
+                            + actionName
+                            + "' not found in app.yml. Use --list to see available actions.");
+        }
+
+        // Get the classpath for variable substitution only if needed
+        List<Path> classpath = Collections.emptyList();
+        if (command.contains("{{deps}}")) {
+            classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
+        }
+
+        return ScriptUtils.executeScript(command, args, classpath, true);
+    }
+
+    /**
+     * Returns a list of available action names defined in the app.yml file.
+     *
+     * @return A list of available action names
+     * @throws IOException If an error occurred during the operation
+     */
+    public List<String> listActions() throws IOException {
+        AppInfo appInfo = AppInfo.read();
+        return new ArrayList<>(appInfo.getActionNames());
     }
 
     private static boolean isWindows() {
