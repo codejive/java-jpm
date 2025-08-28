@@ -20,7 +20,6 @@ jobs:
       JRELEASER_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
       JRELEASER_MAVENCENTRAL_USERNAME: ${{ secrets.MAVENCENTRAL_USERNAME }}
       JRELEASER_MAVENCENTRAL_PASSWORD: ${{ secrets.MAVENCENTRAL_PASSWORD }}
-      JRELEASER_PROJECT_VERSION: ${{ github.event.inputs.version }}
 
     steps:
       - name: Checkout
@@ -35,11 +34,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Stage assemble
-        run: ./mvnw --no-transfer-progress --batch-mode clean deploy jreleaser:assemble -Prelease
-
       - name: Set release version
         run: ./mvnw --no-transfer-progress --batch-mode versions:set -DnewVersion=${{ github.event.inputs.version }}
+
+      - name: Stage assemble
+        run: ./mvnw --no-transfer-progress --batch-mode clean deploy jreleaser:assemble -Prelease
 
       - name: Commit & Push changes
         if: false
