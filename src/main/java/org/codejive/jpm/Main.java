@@ -414,9 +414,9 @@ public class Main {
     }
 
     abstract static class DoAlias implements Callable<Integer> {
-        @Mixin DoAliasMixin doAliasMixin;
+        @Mixin DepsMixin depsMixin;
 
-        @Unmatched List<String> unmatchedArgs = new ArrayList<>();
+        @Unmatched List<String> args = new ArrayList<>();
 
         abstract String actionName();
 
@@ -425,10 +425,10 @@ public class Main {
             try {
                 // Use only unmatched args for pass-through to preserve ordering
                 return Jpm.builder()
-                        .directory(doAliasMixin.depsMixin.directory)
-                        .noLinks(doAliasMixin.depsMixin.noLinks)
+                        .directory(depsMixin.directory)
+                        .noLinks(depsMixin.noLinks)
                         .build()
-                        .executeAction(actionName(), unmatchedArgs);
+                        .executeAction(actionName(), args);
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 return 1;
@@ -488,12 +488,6 @@ public class Main {
                 description = "Always copy artifacts, don't try to create symlinks",
                 defaultValue = "false")
         boolean noLinks;
-    }
-
-    static class DoAliasMixin {
-        @Mixin DepsMixin depsMixin;
-
-        // Remove @Parameters - let @Unmatched in DoAlias handle everything
     }
 
     static class ArtifactsMixin {
