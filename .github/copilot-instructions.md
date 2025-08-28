@@ -87,6 +87,7 @@ Always manually validate jpm functionality after making changes:
 - `app.yml` - jpm's actual runtime dependencies and actions (NOT an example file). Dependencies should be kept up-to-date with the (non-test) dependencies in pom.xml
 - `RELEASE.md` - Release process documentation
 - `.gitignore` - Excludes target/, deps/, IDE files
+- `src/main/java/org/codejive/jpm/Main.java` - The main entry point of the code, but also contains JBang directives like //DEPS and //SOURCES. The //DEPS lines should be kept up-to-date with the (non-test) dependencies in pom.xml. The //SOURCES lines should contain a list of all source files (except for Main.java itself) needed to compile.
 
 ## Common Commands Reference
 
