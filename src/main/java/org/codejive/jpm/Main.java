@@ -320,8 +320,8 @@ public class Main {
     @Command(
             name = "do",
             description =
-                    "Executes an action command defined in the app.yml file. Actions can use variable substitution for classpath.\n\n"
-                            + "Example:\n  jpm do build\n  jpm do test\n")
+                    "Executes an action command defined in the app.yml file.\n\n"
+                            + "Example:\n  jpm do build\n  jpm do test --arg verbose\n")
     static class Do implements Callable<Integer> {
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
