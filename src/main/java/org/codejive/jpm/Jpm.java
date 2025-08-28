@@ -210,7 +210,7 @@ public class Jpm {
             classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
         }
 
-        return ScriptUtils.executeScript(command, args, classpath, true);
+        return ScriptUtils.executeScript(command, args, classpath, verbose);
     }
 
     /**
