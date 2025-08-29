@@ -6,8 +6,8 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -16,11 +16,11 @@ import org.yaml.snakeyaml.Yaml;
  * from/to files.
  */
 public class AppInfo {
-    private Map<String, Object> yaml = new TreeMap<>();
+    private Map<String, Object> yaml = new LinkedHashMap<>();
 
-    public Map<String, String> dependencies = new TreeMap<>();
-    public Map<String, String> repositories = new TreeMap<>();
-    public Map<String, String> actions = new TreeMap<>();
+    public Map<String, String> dependencies = new LinkedHashMap<>();
+    public Map<String, String> repositories = new LinkedHashMap<>();
+    public Map<String, String> actions = new LinkedHashMap<>();
 
     /** The official name of the app.yml file. */
     public static final String APP_INFO_FILE = "app.yml";
@@ -72,7 +72,7 @@ public class AppInfo {
         }
         // Ensure yaml is never null
         if (appInfo.yaml == null) {
-            appInfo.yaml = new TreeMap<>();
+            appInfo.yaml = new LinkedHashMap<>();
         }
         // WARNING awful code ahead
         if (appInfo.yaml.containsKey("dependencies")
