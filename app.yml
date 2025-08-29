@@ -13,3 +13,5 @@ actions:
   build: ".{/}mvnw spotless:apply package -DskipTests"
   run: "{./target/binary/bin/jpm}"
   test: ".{/}mvnw test"
+  buildj: "javac -cp {{deps}} -d classes --source-path src/main/java src/main/java/org/codejive/jpm/Main.java"
+  runj: "java -cp classes:{{deps}} org.codejive.jpm.Main"
