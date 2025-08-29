@@ -1,4 +1,4 @@
-package org.codejive.jpm.json;
+package org.codejive.jpm.config;
 
 import static org.assertj.core.api.Assertions.*;
 

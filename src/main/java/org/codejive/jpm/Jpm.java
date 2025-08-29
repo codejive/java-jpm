@@ -3,7 +3,7 @@ package org.codejive.jpm;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import org.codejive.jpm.json.AppInfo;
+import org.codejive.jpm.config.AppInfo;
 import org.codejive.jpm.util.*;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
@@ -91,7 +91,22 @@ public class Jpm {
      */
     public SyncStats copy(String[] artifactNames, boolean sync)
             throws IOException, DependencyResolutionException {
-        List<Path> files = Resolver.create(artifactNames).resolvePaths();
+        return copy(artifactNames, Collections.emptyMap(), sync);
+    }
+
+    /**
+     * Copies the given artifacts to the target directory.
+     *
+     * @param artifactNames The artifacts to copy.
+     * @param repos A map of additional repository names to URLs where artifacts can be found.
+     * @param sync Whether to sync the target directory or not.
+     * @return An instance of {@link SyncStats} containing the statistics of the copy operation.
+     * @throws IOException If an error occurred during the copy operation.
+     * @throws DependencyResolutionException If an error occurred during the dependency resolution.
+     */
+    public SyncStats copy(String[] artifactNames, Map<String, String> repos, boolean sync)
+            throws IOException, DependencyResolutionException {
+        List<Path> files = Resolver.create(artifactNames, repos).resolvePaths();
         return FileUtils.syncArtifacts(files, directory, noLinks, !sync);
     }
 
@@ -131,10 +146,28 @@ public class Jpm {
      */
     public SyncStats install(String[] artifactNames)
             throws IOException, DependencyResolutionException {
+        return install(artifactNames, Collections.emptyMap());
+    }
+
+    /**
+     * Installs the given artifacts to the target directory while also registering them as
+     * dependencies in the app.yml file in the current directory. If no artifacts are given, all
+     * dependencies in the app.yml file will be installed. NB: "installation" in this context
+     * basically means sync-copying the artifacts to the target directory.
+     *
+     * @param artifactNames The artifacts to install.
+     * @param extraRepos A map of additional repository names to URLs where artifacts can be found.
+     * @return An instance of {@link SyncStats} containing the statistics of the install operation.
+     * @throws IOException If an error occurred during the install operation.
+     * @throws DependencyResolutionException If an error occurred during the dependency resolution.
+     */
+    public SyncStats install(String[] artifactNames, Map<String, String> extraRepos)
+            throws IOException, DependencyResolutionException {
         AppInfo appInfo = AppInfo.read();
         String[] artifacts = getArtifacts(artifactNames, appInfo);
+        Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (artifacts.length > 0) {
-            List<Path> files = Resolver.create(artifacts).resolvePaths();
+            List<Path> files = Resolver.create(artifacts, repos).resolvePaths();
             SyncStats stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
             if (artifactNames.length > 0) {
                 for (String dep : artifactNames) {
@@ -162,10 +195,26 @@ public class Jpm {
      */
     public List<Path> path(String[] artifactNames)
             throws DependencyResolutionException, IOException {
+        return path(artifactNames, Collections.emptyMap());
+    }
+
+    /**
+     * Returns the paths of the given artifacts. If no artifacts are given, the paths for all
+     * dependencies in the app.yml file will be returned instead.
+     *
+     * @param artifactNames The artifacts to get the paths for.
+     * @param extraRepos A map of additional repository names to URLs where artifacts can be found.
+     * @return A list of paths.
+     * @throws DependencyResolutionException If an error occurred during the dependency resolution.
+     * @throws IOException If an error occurred during the operation.
+     */
+    public List<Path> path(String[] artifactNames, Map<String, String> extraRepos)
+            throws DependencyResolutionException, IOException {
         AppInfo appInfo = AppInfo.read();
         String[] deps = getArtifacts(artifactNames, appInfo);
+        Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (deps.length > 0) {
-            return Resolver.create(deps).resolvePaths();
+            return Resolver.create(deps, repos).resolvePaths();
         } else {
             return Collections.emptyList();
         }
@@ -179,6 +228,12 @@ public class Jpm {
             deps = appInfo.getDependencyGAVs();
         }
         return deps;
+    }
+
+    private Map<String, String> getRepositories(Map<String, String> extraRepos, AppInfo appInfo) {
+        Map<String, String> repos = new HashMap<>(appInfo.repositories);
+        repos.putAll(extraRepos);
+        return repos;
     }
 
     /**

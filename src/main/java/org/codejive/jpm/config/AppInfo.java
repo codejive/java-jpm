@@ -1,4 +1,4 @@
-package org.codejive.jpm.json;
+package org.codejive.jpm.config;
 
 import java.io.IOException;
 import java.io.Reader;
@@ -17,7 +17,9 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class AppInfo {
     private Map<String, Object> yaml = new TreeMap<>();
+
     public Map<String, String> dependencies = new TreeMap<>();
+    public Map<String, String> repositories = new TreeMap<>();
     public Map<String, String> actions = new TreeMap<>();
 
     /** The official name of the app.yml file. */
@@ -41,7 +43,7 @@ public class AppInfo {
      * @return The action command or null if not found
      */
     public String getAction(String actionName) {
-        return actions.get(actionName);
+        return actions != null ? actions.get(actionName) : null;
     }
 
     /**
@@ -50,7 +52,7 @@ public class AppInfo {
      * @return A set of action names
      */
     public java.util.Set<String> getActionNames() {
-        return actions.keySet();
+        return actions != null ? actions.keySet() : java.util.Collections.emptySet();
     }
 
     /**
@@ -80,6 +82,14 @@ public class AppInfo {
                 appInfo.dependencies.put(entry.getKey(), entry.getValue().toString());
             }
         }
+        // Parse repositories section
+        if (appInfo.yaml.containsKey("repositories")
+                && appInfo.yaml.get("repositories") instanceof Map) {
+            Map<String, Object> deps = (Map<String, Object>) appInfo.yaml.get("repositories");
+            for (Map.Entry<String, Object> entry : deps.entrySet()) {
+                appInfo.repositories.put(entry.getKey(), entry.getValue().toString());
+            }
+        }
         // Parse actions section
         if (appInfo.yaml.containsKey("actions") && appInfo.yaml.get("actions") instanceof Map) {
             Map<String, Object> actions = (Map<String, Object>) appInfo.yaml.get("actions");
@@ -105,7 +115,16 @@ public class AppInfo {
             Yaml yaml = new Yaml(dopts);
             // WARNING awful code ahead
             appInfo.yaml.put("dependencies", (Map<String, Object>) (Map) appInfo.dependencies);
-            appInfo.yaml.put("actions", (Map<String, Object>) (Map) appInfo.actions);
+            if (!appInfo.repositories.isEmpty()) {
+                appInfo.yaml.put("repositories", (Map<String, Object>) (Map) appInfo.repositories);
+            } else {
+                appInfo.yaml.remove("repositories");
+            }
+            if (!appInfo.actions.isEmpty()) {
+                appInfo.yaml.put("actions", (Map<String, Object>) (Map) appInfo.actions);
+            } else {
+                appInfo.yaml.remove("actions");
+            }
             yaml.dump(appInfo.yaml, out);
         }
     }
