@@ -84,6 +84,13 @@ public class SearchUtils {
         try (CloseableHttpClient httpClient = HttpClients.custom().setUserAgent(agent).build()) {
             HttpGet request = new HttpGet(searchUrl);
             try (CloseableHttpResponse response = httpClient.execute(request)) {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    throw new IOException(
+                            "Search failed: Maven Central Search API returned an error: "
+                                    + response.getStatusLine().getStatusCode()
+                                    + " "
+                                    + response.getStatusLine().getReasonPhrase());
+                }
                 DumperOptions dopts = new DumperOptions();
                 Constructor cons = new Constructor(MvnSearchResult.class, new LoaderOptions());
                 Representer representer = new Representer(dopts);
@@ -93,7 +100,8 @@ public class SearchUtils {
                 InputStreamReader rdr = new InputStreamReader(ins);
                 MvnSearchResult result = yaml.load(rdr);
                 if (result.responseHeader.status != 0) {
-                    throw new IOException("Search failed");
+                    throw new IOException(
+                            "Search failed: Maven Central Search API returned a response that could not be understood");
                 }
                 List<DefaultArtifact> artifacts =
                         result.response.docs.stream()

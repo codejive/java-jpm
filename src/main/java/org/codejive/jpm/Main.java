@@ -169,9 +169,14 @@ public class Main {
                 if (max == null) {
                     max = (Integer) 20;
                 }
-                String[] artifactNames = search(artifactPattern);
-                if (artifactNames.length > 0) {
-                    Arrays.stream(artifactNames).forEach(System.out::println);
+                try {
+                    String[] artifactNames = search(artifactPattern);
+                    if (artifactNames.length > 0) {
+                        Arrays.stream(artifactNames).forEach(System.out::println);
+                    }
+                } catch (UncheckedIOException ex) {
+                    System.err.println(ex.getCause().getMessage());
+                    return 1;
                 }
             }
             return (Integer) 0;
