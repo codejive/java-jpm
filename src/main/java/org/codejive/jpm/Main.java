@@ -4,8 +4,8 @@
 //DEPS org.yaml:snakeyaml:2.4
 //DEPS org.jline:jline-console-ui:3.30.5 org.jline:jline-terminal-jni:3.30.5
 //DEPS org.slf4j:slf4j-api:2.0.17 org.slf4j:slf4j-simple:2.0.17
-//SOURCES Jpm.java config/AppInfo.java util/FileUtils.java util/Resolver.java util/ScriptUtils.java
-//SOURCES util/SearchResult.java util/SearchUtils.java util/SyncStats.java util/Version.java
+//SOURCES Jpm.java config/AppInfo.java util/CommandsParser.java util/FileUtils.java util/Resolver.java
+//SOURCES util/ScriptUtils.java util/SearchResult.java util/SearchUtils.java util/SyncStats.java util/Version.java
 // spotless:on
 
 package org.codejive.jpm;
@@ -49,6 +49,7 @@ import picocli.CommandLine.Unmatched;
             Main.Search.class,
             Main.Install.class,
             Main.PrintPath.class,
+            Main.Exec.class,
             Main.Do.class,
             Main.Clean.class,
             Main.Build.class,
@@ -332,10 +333,66 @@ public class Main {
     }
 
     @Command(
+            name = "exec",
+            description =
+                    "Executes a shell command that can use special tokens to deal with OS-specific quirks like paths."
+                            + " This means that commands can be written in a somewhat platform independent way and will work on Windows, Linux and MacOS.\n"
+                            + "\n"
+                            + "Supported tokens and what they expand to:\n"
+                            + "  {{deps}}  : the classpath of all dependencies defined in the app.yml file\n"
+                            + "  {/} : the OS' file path separator\n"
+                            + "  {:} : the OS' class path separator\n"
+                            + "  {~} : the user's home directory using the OS' class path format\n"
+                            + "  {;} : the OS' command separator\n"
+                            + "  {./file/path} : a path using the OS' path format (must start with './'!)\n"
+                            + "  {./lib:./ext} : a class path using the OS' class path format (must start with './'!)\n"
+                            + "  @[ ... ] : writes contents to a file and inserts @<path-to-file> instead\n"
+                            + "\n"
+                            + "In actuality the command is pretty smart and will try to do the right thing, as long as {{deps}} is the only token you use."
+                            + " In the examples below the first line shows how to do it the hard way, by specifying everything manually, while the second line shows how much easier it is when you can rely on the built-in smart feature."
+                            + " Is the smart feature bothering you? Just use any of the other tokens besides {{deps}} and it will be turned off."
+                            + " By default args files will only be considered for Java commands that are know to support them (java, javac, javadoc, etc), but you can indicate that your command supports it as well by adding a single @ as the first character of the command.\n"
+                            + "\n"
+                            + "Example:\n"
+                            + "  jpm exec javac -cp @[{{deps}}] -d {./out/classes} --source-path {./src/main/java} App.java\n"
+                            + "  jpm exec javac -cp {{deps}} -d out/classes --source-path src/main/java App.java\n"
+                            + "  jpm exec @kotlinc -cp {{deps}} -d out/classes src/main/kotlin/App.kt\n")
+    static class Exec implements Callable<Integer> {
+        @Mixin DepsMixin depsMixin;
+        @Mixin QuietMixin quietMixin;
+
+        @Parameters(paramLabel = "command", description = "The command to execute", arity = "0..*")
+        private List<String> command;
+
+        @Override
+        public Integer call() throws Exception {
+            String cmd = String.join(" ", command);
+            try {
+                return Jpm.builder()
+                        .directory(depsMixin.directory)
+                        .noLinks(depsMixin.noLinks)
+                        .verbose(!quietMixin.quiet)
+                        .build()
+                        .executeCommand(cmd);
+            } catch (Exception e) {
+                System.err.println(e.getMessage());
+                return 1;
+            }
+        }
+    }
+
+    @Command(
             name = "do",
             description =
-                    "Executes an action command defined in the app.yml file.\n\n"
-                            + "Example:\n  jpm do build\n  jpm do test --arg verbose\n")
+                    "Executes an action command defined in the app.yml file."
+                            + " The command is executed using the same rules as the exec command, so it can use all the same tokens and features."
+                            + " You can also pass additional arguments to the action using -a or --arg followed by the argument value."
+                            + " You can chain multiple actions and their arguments in a single command line."
+                            + "\n"
+                            + "Example:\n"
+                            + "  jpm do build\n"
+                            + "  jpm do test --arg verbose\n"
+                            + "  jpm do build -a --fresh test -a verbose\n")
     static class Do implements Callable<Integer> {
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;

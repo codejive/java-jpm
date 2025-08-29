@@ -22,7 +22,7 @@ class ScriptUtilsTest {
                         Paths.get("deps/lib3.jar"));
 
         String command = "java -cp {{deps}} MainClass";
-        String result = ScriptUtils.processCommand(command, classpath);
+        String result = ScriptUtils.processCommand(command, classpath, null);
 
         // Use the actual paths from the classpath as they would be processed
         String expectedClasspath =
@@ -38,7 +38,7 @@ class ScriptUtilsTest {
     void testProcessCommandWithoutDepsSubstitution() throws Exception {
         List<Path> classpath = Arrays.asList(Paths.get("deps/lib1.jar"));
         String command = "echo Hello World";
-        String result = ScriptUtils.processCommand(command, classpath);
+        String result = ScriptUtils.processCommand(command, classpath, null);
         // Command should remain unchanged since no {{deps}} variable
         assertThat(result).isEqualTo("echo Hello World");
     }
@@ -47,7 +47,7 @@ class ScriptUtilsTest {
     void testProcessCommandWithEmptyClasspath() throws Exception {
         List<Path> classpath = Collections.emptyList();
         String command = "java -cp \"{{deps}}\" MainClass";
-        String result = ScriptUtils.processCommand(command, classpath);
+        String result = ScriptUtils.processCommand(command, classpath, null);
         // {{deps}} should be replaced with empty string
         assertThat(result).isEqualTo("java -cp \"\" MainClass");
     }
@@ -55,7 +55,7 @@ class ScriptUtilsTest {
     @Test
     void testProcessCommandWithNullClasspath() throws Exception {
         String command = "java -cp \"{{deps}}\" MainClass";
-        String result = ScriptUtils.processCommand(command, null);
+        String result = ScriptUtils.processCommand(command, null, null);
         // {{deps}} should be replaced with empty string
         assertThat(result).isEqualTo("java -cp \"\" MainClass");
     }
@@ -63,7 +63,7 @@ class ScriptUtilsTest {
     @Test
     void testProcessCommandWithPathTokens() throws Exception {
         String command = "java -cp .{/}libs{:}.{/}ext{:}{~}{/}usrlibs MainClass";
-        String result = ScriptUtils.processCommand(command, null);
+        String result = ScriptUtils.processCommand(command, null, null);
         String expectedPath =
                 ScriptUtils.isWindows()
                         ? ".\\libs;.\\ext;" + System.getProperty("user.home") + "\\usrlibs"
@@ -74,7 +74,7 @@ class ScriptUtilsTest {
     @Test
     void testProcessCommandWithPathReplacement() throws Exception {
         String command = "java -cp {./libs:./ext:~/usrlibs} MainClass";
-        String result = ScriptUtils.processCommand(command, null);
+        String result = ScriptUtils.processCommand(command, null, null);
         String expectedPath =
                 ScriptUtils.isWindows()
                         ? ".\\libs;.\\ext;" + System.getProperty("user.home") + "\\usrlibs"
@@ -85,7 +85,7 @@ class ScriptUtilsTest {
     @Test
     void testProcessCommandWithPathReplacement2() throws Exception {
         String command = "java -cp {~/usrlibs:./libs:./ext} MainClass";
-        String result = ScriptUtils.processCommand(command, null);
+        String result = ScriptUtils.processCommand(command, null, null);
         String expectedPath =
                 ScriptUtils.isWindows()
                         ? System.getProperty("user.home") + "\\usrlibs;.\\libs;.\\ext"
@@ -97,7 +97,7 @@ class ScriptUtilsTest {
     void testProcessCommandWithMultipleDepsReferences() throws Exception {
         List<Path> classpath = Arrays.asList(Paths.get("deps/lib1.jar"));
         String command = "java -cp {{deps}} MainClass && java -cp {{deps}} TestClass";
-        String result = ScriptUtils.processCommand(command, classpath);
+        String result = ScriptUtils.processCommand(command, classpath, null);
 
         // Use the actual path as it would be processed
         String expectedPath = classpath.get(0).toString();
@@ -119,28 +119,13 @@ class ScriptUtilsTest {
     }
 
     @Test
-    void testExecuteScriptSimpleCommand() {
-        // Test that executeScript can be called without throwing exceptions
-        // We can't easily test the actual execution without mocking ProcessBuilder
-        assertThatCode(
-                        () -> {
-                            // Use a simple command that should work on most systems
-                            List<Path> classpath = Collections.emptyList();
-                            // Note: This test is limited because we can't easily mock
-                            // ProcessBuilder
-                            // In a real scenario, you might want to use a mocking framework
-                        })
-                .doesNotThrowAnyException();
-    }
-
-    @Test
-    void testProcessCommandIntegration() throws Exception {
+    void testProcessCommandMultipleSubs() throws Exception {
         // Integration test combining variable substitution and path handling
         List<Path> classpath =
                 Arrays.asList(Paths.get("deps/lib1.jar"), Paths.get("deps/lib2.jar"));
 
         String command = "java -cp .{:}.{/}libs{/}*{:}{{deps}} -Dmyprop=value MainClass arg1";
-        String result = ScriptUtils.processCommand(command, classpath);
+        String result = ScriptUtils.processCommand(command, classpath, null);
 
         // Use the actual paths as they would be processed
         String expectedClasspath =
@@ -155,5 +140,121 @@ class ScriptUtilsTest {
         }
         assertThat(result)
                 .isEqualTo("java -cp " + expectedClasspath + " -Dmyprop=value MainClass arg1");
+    }
+
+    @Test
+    void testProcessCommandArgsFilesSkip() throws Exception {
+        List<Path> classpath =
+                Arrays.asList(Paths.get("deps/lib1.jar"), Paths.get("deps/lib2.jar"));
+
+        String command = "java -cp @[.{:}.{/}libs{/}*{:}{{deps}}] -Dmyprop=value MainClass arg1";
+        String result = ScriptUtils.processCommand(command, classpath, null);
+
+        // Use the actual paths as they would be processed
+        String expectedClasspath =
+                String.join(
+                        File.pathSeparator,
+                        classpath.get(0).toString(),
+                        classpath.get(1).toString());
+        if (ScriptUtils.isWindows()) {
+            expectedClasspath = ".;.\\libs\\*;" + expectedClasspath;
+        } else {
+            expectedClasspath = ".:./libs/*:" + expectedClasspath;
+        }
+        assertThat(result)
+                .isEqualTo("java -cp " + expectedClasspath + " -Dmyprop=value MainClass arg1");
+    }
+
+    @Test
+    void testProcessCommandArgsFilesUse() throws Exception {
+        List<Path> classpath =
+                Arrays.asList(Paths.get("deps/lib1.jar"), Paths.get("deps/lib2.jar"));
+
+        try (ScriptUtils.ArgsFiles argsFiles = new ScriptUtils.ArgsFiles()) {
+            String command =
+                    "java -cp @[.{:}.{/}libs{/}*{:}{{deps}}] -Dmyprop=value MainClass arg1";
+            String result = ScriptUtils.processCommand(command, classpath, argsFiles::create);
+
+            assertThat(argsFiles.files).hasSize(1);
+            assertThat(argsFiles.files.get(0)).exists();
+
+            String expectedArgsFile = argsFiles.files.get(0).toString();
+            assertThat(result)
+                    .isEqualTo("java -cp @" + expectedArgsFile + " -Dmyprop=value MainClass arg1");
+
+            String expectedContents =
+                    String.join(
+                            File.pathSeparator,
+                            ".",
+                            Paths.get("./libs/STAR").toString().replace("STAR", "*"),
+                            classpath.get(0).toString(),
+                            classpath.get(1).toString());
+            assertThat(argsFiles.files.get(0)).hasContent(expectedContents);
+        }
+    }
+
+    @Test
+    void testProcessCommandArgsFilesUse2() throws Exception {
+        List<Path> classpath =
+                Arrays.asList(Paths.get("deps/lib1.jar"), Paths.get("deps/lib2.jar"));
+
+        try (ScriptUtils.ArgsFiles argsFiles = new ScriptUtils.ArgsFiles()) {
+            String command =
+                    "java @[-cp .{:}.{/}libs{/}*{:}{{deps}} -Dmyprop=value MainClass arg1]";
+            String result = ScriptUtils.processCommand(command, classpath, argsFiles::create);
+
+            assertThat(argsFiles.files).hasSize(1);
+            assertThat(argsFiles.files.get(0)).exists();
+
+            String expectedArgsFile = argsFiles.files.get(0).toString();
+            assertThat(result).isEqualTo("java @" + expectedArgsFile);
+
+            String expectedContents =
+                    "-cp "
+                            + String.join(
+                                    File.pathSeparator,
+                                    ".",
+                                    Paths.get("./libs/STAR").toString().replace("STAR", "*"),
+                                    classpath.get(0).toString(),
+                                    classpath.get(1).toString())
+                            + " -Dmyprop=value MainClass arg1";
+            assertThat(argsFiles.files.get(0)).hasContent(expectedContents);
+        }
+    }
+
+    @Test
+    void testProcessMultiCommandArgsFilesUse() throws Exception {
+        List<Path> classpath =
+                Arrays.asList(Paths.get("deps/lib1.jar"), Paths.get("deps/lib2.jar"));
+
+        try (ScriptUtils.ArgsFiles argsFiles = new ScriptUtils.ArgsFiles()) {
+            String command =
+                    "javac -cp @[.{/}libs{/}*{:}{{deps}}] -d classes --source-path src {src/MainClass.java} && java -cp @[classes{:}.{/}libs{/}*{:}{{deps}}] -Dmyprop=value MainClass arg1";
+            String result = ScriptUtils.processCommand(command, classpath, argsFiles::create);
+
+            assertThat(argsFiles.files).hasSize(2);
+            assertThat(argsFiles.files.get(0)).exists();
+            assertThat(argsFiles.files.get(1)).exists();
+
+            String expectedArgsFile1 = argsFiles.files.get(0).toString();
+            String expectedArgsFile2 = argsFiles.files.get(1).toString();
+            assertThat(result)
+                    .isEqualTo(
+                            "javac -cp @"
+                                    + expectedArgsFile1
+                                    + " -d classes --source-path src {src/MainClass.java} && java -cp @"
+                                    + expectedArgsFile2
+                                    + " -Dmyprop=value MainClass arg1");
+
+            String expectedContents1 =
+                    String.join(
+                            File.pathSeparator,
+                            Paths.get("./libs/STAR").toString().replace("STAR", "*"),
+                            classpath.get(0).toString(),
+                            classpath.get(1).toString());
+            assertThat(argsFiles.files.get(0)).hasContent(expectedContents1);
+            String expectedContents2 = "classes" + File.pathSeparator + expectedContents1;
+            assertThat(argsFiles.files.get(1)).hasContent(expectedContents2);
+        }
     }
 }

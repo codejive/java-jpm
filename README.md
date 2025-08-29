@@ -174,8 +174,7 @@ But you can also simply download and unzip the [release package](https://github.
 
 See:
 
-```shell
-$ jpm --help
+```
 Usage: jpm [-hV] [COMMAND]
 Simple command line tool for managing Maven artifacts
   -h, --help      Show this help message and exit.
@@ -217,12 +216,48 @@ Commands:
               Example:
                 jpm path org.apache.httpcomponents:httpclient:4.5.14
 
-  do          Executes an action command defined in the app.yml file. Actions
-                can use variable substitution for classpath.
+  exec        Executes a shell command that can use special tokens to deal with
+                OS-specific quirks like paths. This means that commands can be
+                written in a somewhat platform independent way and will work on
+                Windows, Linux and MacOS.
+
+              Supported tokens and what they expand to:
+                {{deps}}  : the classpath of all dependencies defined in the app.yml file
+                {/} : the OS' file path separator
+                {:} : the OS' class path separator
+                {~} : the user's home directory using the OS' class path format
+                {;} : the OS' command separator
+                {./file/path} : a path using the OS' path format (must start with './'!)
+                {./lib:./ext} : a class path using the OS' class path format (must start with './'!)
+                @[ ... ] : writes contents to a file and inserts @<path-to-file> instead
+
+              In actuality the command is pretty smart and will try to do the
+                right thing, as long as {{deps}} is the only token you use. In
+                the examples below the first line shows how to do it the hard
+                way, by specifying everything manually, while the second line
+                shows how much easier it is when you can rely on the built-in
+                smart feature. Is the smart feature bothering you? Just use any
+                of the other tokens besides {{deps}} and it will be turned off.
+                By default args files will only be considered for Java commands
+                that are know to support them (java, javac, javadoc, etc), but
+                you can indicate that your command supports it as well by
+                adding a single @ as the first character of the command.
 
               Example:
+                jpm exec javac -cp @[{{deps}}] -d {./out/classes} --source-path {./src/main/java} App.java
+                jpm exec javac -cp {{deps}} -d out/classes --source-path src/main/java App.java
+                jpm exec @kotlinc -cp {{deps}} -d out/classes src/main/kotlin/App.kt
+
+  do          Executes an action command defined in the app.yml file. The
+                command is executed using the same rules as the exec command,
+                so it can use all the same tokens and features. You can also
+                pass additional arguments to the action using -a or --arg
+                followed by the argument value. You can chain multiple actions
+                and their arguments in a single command line.
+              Example:
                 jpm do build
-                jpm do test
+                jpm do test --arg verbose
+                jpm do build -a --fresh test -a verbose
 
   clean       Executes the 'clean' action as defined in the app.yml file.
   build       Executes the 'build' action as defined in the app.yml file.

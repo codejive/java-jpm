@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
-import java.util.List;
 import org.codejive.jpm.util.ScriptUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,10 +46,7 @@ class DoCommandPerformanceTest {
         // Mock ScriptUtils to verify classpath is empty when no {{deps}} variable
         try (MockedStatic<ScriptUtils> mockedScriptUtils = Mockito.mockStatic(ScriptUtils.class)) {
             mockedScriptUtils
-                    .when(
-                            () ->
-                                    ScriptUtils.executeScript(
-                                            anyString(), any(List.class), any(), anyBoolean()))
+                    .when(() -> ScriptUtils.executeScript(anyString(), any(), anyBoolean()))
                     .thenReturn(0);
 
             CommandLine cmd = Main.getCommandLine();
@@ -62,10 +58,7 @@ class DoCommandPerformanceTest {
             mockedScriptUtils.verify(
                     () ->
                             ScriptUtils.executeScript(
-                                    eq("true"),
-                                    eq(Collections.emptyList()),
-                                    eq(Collections.emptyList()),
-                                    eq(true)),
+                                    eq("true"), eq(Collections.emptyList()), eq(true)),
                     times(1));
         }
     }
@@ -82,10 +75,7 @@ class DoCommandPerformanceTest {
 
         try (MockedStatic<ScriptUtils> mockedScriptUtils = Mockito.mockStatic(ScriptUtils.class)) {
             mockedScriptUtils
-                    .when(
-                            () ->
-                                    ScriptUtils.executeScript(
-                                            anyString(), any(List.class), any(), anyBoolean()))
+                    .when(() -> ScriptUtils.executeScript(anyString(), any(), anyBoolean()))
                     .thenReturn(0);
 
             CommandLine cmd = Main.getCommandLine();
@@ -93,12 +83,7 @@ class DoCommandPerformanceTest {
             // Test exact match - should resolve classpath
             cmd.execute("do", "exact");
             mockedScriptUtils.verify(
-                    () ->
-                            ScriptUtils.executeScript(
-                                    contains("{{deps}}"),
-                                    eq(Collections.emptyList()),
-                                    any(),
-                                    eq(true)),
+                    () -> ScriptUtils.executeScript(contains("{{deps}}"), any(), eq(true)),
                     times(1));
 
             mockedScriptUtils.clearInvocations();
@@ -109,7 +94,6 @@ class DoCommandPerformanceTest {
                     () ->
                             ScriptUtils.executeScript(
                                     eq("java -cp ${DEPS} MainClass"),
-                                    eq(Collections.emptyList()),
                                     eq(Collections.emptyList()),
                                     eq(true)),
                     times(1));
@@ -122,7 +106,6 @@ class DoCommandPerformanceTest {
                     () ->
                             ScriptUtils.executeScript(
                                     eq("java -cp mydeps MainClass"),
-                                    eq(Collections.emptyList()),
                                     eq(Collections.emptyList()),
                                     eq(true)),
                     times(1));

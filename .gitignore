@@ -3,6 +3,7 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 deps/
+classes/
 
 ### IntelliJ IDEA ###
 .idea/

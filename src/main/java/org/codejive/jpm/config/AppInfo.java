@@ -61,6 +61,7 @@ public class AppInfo {
      * @return An instance of AppInfo
      * @throws IOException if an error occurred while reading or parsing the file
      */
+    @SuppressWarnings("unchecked")
     public static AppInfo read() throws IOException {
         Path prjJson = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
         AppInfo appInfo = new AppInfo();
@@ -106,6 +107,7 @@ public class AppInfo {
      * @param appInfo The AppInfo object to write
      * @throws IOException if an error occurred while writing the file
      */
+    @SuppressWarnings("unchecked")
     public static void write(AppInfo appInfo) throws IOException {
         Path prjJson = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
         try (Writer out = Files.newBufferedWriter(prjJson)) {

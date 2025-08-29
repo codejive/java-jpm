@@ -1,0 +1,5 @@
+commands ::= <elem>+
+elem ::= <group> | <separator> | <command>
+separator ::= ';' | '&&' | '||'
+group ::= '(' <commands> ')'
+command ::= <word>+

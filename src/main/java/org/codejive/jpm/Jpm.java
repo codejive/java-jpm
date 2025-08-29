@@ -3,6 +3,7 @@ package org.codejive.jpm;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.codejive.jpm.config.AppInfo;
 import org.codejive.jpm.util.*;
 import org.eclipse.aether.artifact.Artifact;
@@ -240,7 +241,7 @@ public class Jpm {
     /**
      * Executes an action defined in app.yml file.
      *
-     * @param actionName The name of the action to execute (null to list actions)
+     * @param actionName The name of the action to execute
      * @return An integer containing the exit result of the action
      * @throws IllegalArgumentException If the action name is not provided or not found
      * @throws IOException If an error occurred during the operation
@@ -260,13 +261,15 @@ public class Jpm {
                             + "' not found in app.yml. Use --list to see available actions.");
         }
 
-        // Get the classpath for variable substitution only if needed
-        List<Path> classpath = Collections.emptyList();
-        if (command.contains("{{deps}}")) {
-            classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
+        // Add the user arguments to the command
+        if (args != null && !args.isEmpty()) {
+            command +=
+                    args.stream()
+                            .map(ScriptUtils::quoteArgument)
+                            .collect(Collectors.joining(" ", " ", ""));
         }
 
-        return ScriptUtils.executeScript(command, args, classpath, verbose);
+        return executeCommand(command);
     }
 
     /**
@@ -278,5 +281,25 @@ public class Jpm {
     public List<String> listActions() throws IOException {
         AppInfo appInfo = AppInfo.read();
         return new ArrayList<>(appInfo.getActionNames());
+    }
+
+    /**
+     * Executes an action defined in app.yml file.
+     *
+     * @param command The command to execute
+     * @return An integer containing the exit result of the action
+     * @throws IOException If an error occurred during the operation
+     * @throws DependencyResolutionException If an error occurred during dependency resolution
+     * @throws InterruptedException If the action execution was interrupted
+     */
+    public int executeCommand(String command)
+            throws IOException, DependencyResolutionException, InterruptedException {
+        // Get the classpath for variable substitution only if needed
+        List<Path> classpath = Collections.emptyList();
+        if (command.contains("{{deps}}")) {
+            classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
+        }
+
+        return ScriptUtils.executeScript(command, classpath, verbose);
     }
 }
