@@ -176,6 +176,7 @@ public class Jpm {
                     String version = dep.substring(p + 1);
                     appInfo.dependencies.put(name, version);
                 }
+                appInfo.repositories.putAll(repos);
                 AppInfo.write(appInfo);
             }
             return stats;
