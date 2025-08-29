@@ -4,13 +4,15 @@
 //DEPS org.yaml:snakeyaml:2.4
 //DEPS org.jline:jline-console-ui:3.30.5 org.jline:jline-terminal-jni:3.30.5
 //DEPS org.slf4j:slf4j-api:2.0.17 org.slf4j:slf4j-simple:2.0.17
-//SOURCES Jpm.java json/AppInfo.java util/FileUtils.java util/Resolver.java util/ScriptUtils.java
+//SOURCES Jpm.java config/AppInfo.java util/FileUtils.java util/Resolver.java util/ScriptUtils.java
 //SOURCES util/SearchResult.java util/SearchUtils.java util/SyncStats.java util/Version.java
 // spotless:on
 
 package org.codejive.jpm;
 
 import java.io.*;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -80,7 +82,10 @@ public class Main {
                             .directory(artifactsMixin.depsMixin.directory)
                             .noLinks(artifactsMixin.depsMixin.noLinks)
                             .build()
-                            .copy(artifactsMixin.artifactNames, sync);
+                            .copy(
+                                    artifactsMixin.artifactNames,
+                                    artifactsMixin.getRepositoryMap(),
+                                    sync);
             if (!quietMixin.quiet) {
                 printStats(stats);
             }
@@ -285,7 +290,9 @@ public class Main {
                             .directory(optionalArtifactsMixin.depsMixin.directory)
                             .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
                             .build()
-                            .install(optionalArtifactsMixin.artifactNames);
+                            .install(
+                                    optionalArtifactsMixin.artifactNames,
+                                    optionalArtifactsMixin.getRepositoryMap());
             if (!quietMixin.quiet) {
                 printStats(stats);
             }
@@ -310,7 +317,9 @@ public class Main {
                             .directory(optionalArtifactsMixin.depsMixin.directory)
                             .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
                             .build()
-                            .path(optionalArtifactsMixin.artifactNames);
+                            .path(
+                                    optionalArtifactsMixin.artifactNames,
+                                    optionalArtifactsMixin.getRepositoryMap());
             if (!files.isEmpty()) {
                 String classpath =
                         files.stream()
@@ -497,9 +506,37 @@ public class Main {
         boolean noLinks;
     }
 
-    static class ArtifactsMixin {
+    static class BaseArtifactsMixin {
         @Mixin DepsMixin depsMixin;
 
+        @Option(
+                names = {"-r", "--repo"},
+                description =
+                        "URL to additional repository to use when resolving artifacts. Can be preceded by a name and an equals sign, e.g. -r myrepo=https://my.repo.com/maven2. When needing to pass user and password you can set JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD environment variables.")
+        List<String> repositories = new ArrayList<>();
+
+        Map<String, String> getRepositoryMap() {
+            Map<String, String> repoMap = new HashMap<>();
+            for (String repo : repositories) {
+                int eq = repo.indexOf('=');
+                if (eq > 0) {
+                    repoMap.put(repo.substring(0, eq), repo.substring(eq + 1));
+                } else {
+                    String name = repo;
+                    try {
+                        URL url = new URL(repo);
+                        name = url.getHost();
+                    } catch (MalformedURLException e) {
+                        // Ignore
+                    }
+                    repoMap.put(name, repo);
+                }
+            }
+            return repoMap;
+        }
+    }
+
+    static class ArtifactsMixin extends BaseArtifactsMixin {
         @Parameters(
                 paramLabel = "artifacts",
                 description =
@@ -508,9 +545,7 @@ public class Main {
         private String[] artifactNames = {};
     }
 
-    static class OptionalArtifactsMixin {
-        @Mixin DepsMixin depsMixin;
-
+    static class OptionalArtifactsMixin extends BaseArtifactsMixin {
         @Parameters(
                 paramLabel = "artifacts",
                 description =
