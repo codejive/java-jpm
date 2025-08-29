@@ -518,18 +518,26 @@ public class Main {
         Map<String, String> getRepositoryMap() {
             Map<String, String> repoMap = new HashMap<>();
             for (String repo : repositories) {
+                String name;
+                String url;
                 int eq = repo.indexOf('=');
-                if (eq > 0) {
-                    repoMap.put(repo.substring(0, eq), repo.substring(eq + 1));
+                if (eq >= 0) {
+                    name = repo.substring(0, eq);
+                    url = repo.substring(eq + 1);
                 } else {
-                    String name = repo;
+                    name = "";
+                    url = repo;
+                }
+                if (name.isEmpty()) {
                     try {
-                        URL url = new URL(repo);
-                        name = url.getHost();
+                        URL x = new URL(repo);
+                        name = x.getHost();
                     } catch (MalformedURLException e) {
-                        // Ignore
+                        name = "repo" + (repoMap.size() + 1);
                     }
-                    repoMap.put(name, repo);
+                }
+                if (!url.isEmpty()) {
+                    repoMap.put(name, url);
                 }
             }
             return repoMap;

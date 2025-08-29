@@ -278,12 +278,4 @@ public class Jpm {
         AppInfo appInfo = AppInfo.read();
         return new ArrayList<>(appInfo.getActionNames());
     }
-
-    private static boolean isWindows() {
-        String os =
-                System.getProperty("os.name")
-                        .toLowerCase(Locale.ENGLISH)
-                        .replaceAll("[^a-z0-9]+", "");
-        return os.startsWith("win");
-    }
 }
