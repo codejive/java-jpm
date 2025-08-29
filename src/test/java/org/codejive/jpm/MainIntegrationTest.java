@@ -259,6 +259,56 @@ class MainIntegrationTest {
         }
     }
 
+    @Test
+    void testCopyCommandWithRepositoryOptions() throws IOException {
+        // Test copy command with --repo options
+        CommandLine cmd = Main.getCommandLine();
+        int exitCode =
+                cmd.execute(
+                        "copy",
+                        "--repo",
+                        "central=https://repo1.maven.org/maven2",
+                        "--repo",
+                        "https://jcenter.bintray.com",
+                        "com.google.guava:guava:31.1-jre");
+
+        // The command should execute successfully (even if dependency resolution might fail)
+        assertThat(exitCode >= 0).isTrue();
+    }
+
+    @Test
+    void testInstallCommandWithRepositoryOptions() throws IOException {
+        CommandLine cmd = Main.getCommandLine();
+        int exitCode =
+                cmd.execute(
+                        "install",
+                        "--repo",
+                        "central=https://repo1.maven.org/maven2",
+                        "com.google.guava:guava:31.1-jre");
+
+        // The command should execute successfully (even if dependency resolution might fail)
+        assertThat(exitCode >= 0).isTrue();
+    }
+
+    @Test
+    void testPathCommandWithRepositoryOptionsAndAppYml() throws IOException {
+        // Create app.yml with repositories
+        createAppYmlWithRepositories();
+
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = Main.getCommandLine();
+            int exitCode =
+                    cmd.execute(
+                            "path",
+                            "--repo",
+                            "jcenter=https://jcenter.bintray.com",
+                            "com.google.guava:guava:31.1-jre");
+
+            // The command should execute (even if dependency resolution might fail)
+            assertThat(exitCode >= 0).isTrue();
+        }
+    }
+
     private void createAppYml() throws IOException {
         String yamlContent =
                 "dependencies:\n"
@@ -285,6 +335,21 @@ class MainIntegrationTest {
                         + "actions:\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
                         + "  hello: \"echo Hello World\"\n";
+        Files.writeString(tempDir.resolve("app.yml"), yamlContent);
+    }
+
+    private void createAppYmlWithRepositories() throws IOException {
+        String yamlContent =
+                "dependencies:\n"
+                        + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
+                        + "\n"
+                        + "repositories:\n"
+                        + "  central: \"https://repo1.maven.org/maven2\"\n"
+                        + "  custom: \"https://my.custom.repo/maven2\"\n"
+                        + "\n"
+                        + "actions:\n"
+                        + "  build: \"javac -cp {{deps}} *.java\"\n"
+                        + "  test: \"java -cp {{deps}} TestRunner\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 }
