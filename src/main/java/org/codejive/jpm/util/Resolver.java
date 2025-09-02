@@ -64,8 +64,11 @@ public class Resolver {
                 artifacts.stream()
                         .map(a -> new Dependency(a, JavaScopes.RUNTIME))
                         .collect(Collectors.toList());
-        ContextOverrides overrides =
-                ContextOverrides.create().withUserSettings(true).repositories(repositories).build();
+        ContextOverrides.Builder ctxb = ContextOverrides.create().withUserSettings(true);
+        if (repositories != null && !repositories.isEmpty()) {
+            ctxb.repositories(repositories);
+        }
+        ContextOverrides overrides = ctxb.build();
         Runtime runtime = Runtimes.INSTANCE.getRuntime();
         try (Context context = runtime.create(overrides)) {
             CollectRequest collectRequest =
