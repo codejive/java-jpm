@@ -86,11 +86,11 @@ public class Jpm {
      *
      * @param artifactNames The artifacts to copy.
      * @param sync Whether to sync the target directory or not.
-     * @return An instance of {@link SyncStats} containing the statistics of the copy operation.
+     * @return An instance of {@link SyncResult} containing the statistics of the copy operation.
      * @throws IOException If an error occurred during the copy operation.
      * @throws DependencyResolutionException If an error occurred during the dependency resolution.
      */
-    public SyncStats copy(String[] artifactNames, boolean sync)
+    public SyncResult copy(String[] artifactNames, boolean sync)
             throws IOException, DependencyResolutionException {
         return copy(artifactNames, Collections.emptyMap(), sync);
     }
@@ -101,11 +101,11 @@ public class Jpm {
      * @param artifactNames The artifacts to copy.
      * @param repos A map of additional repository names to URLs where artifacts can be found.
      * @param sync Whether to sync the target directory or not.
-     * @return An instance of {@link SyncStats} containing the statistics of the copy operation.
+     * @return An instance of {@link SyncResult} containing the statistics of the copy operation.
      * @throws IOException If an error occurred during the copy operation.
      * @throws DependencyResolutionException If an error occurred during the dependency resolution.
      */
-    public SyncStats copy(String[] artifactNames, Map<String, String> repos, boolean sync)
+    public SyncResult copy(String[] artifactNames, Map<String, String> repos, boolean sync)
             throws IOException, DependencyResolutionException {
         List<Path> files = Resolver.create(artifactNames, repos).resolvePaths();
         return FileUtils.syncArtifacts(files, directory, noLinks, !sync);
@@ -141,11 +141,11 @@ public class Jpm {
      * basically means sync-copying the artifacts to the target directory.
      *
      * @param artifactNames The artifacts to install.
-     * @return An instance of {@link SyncStats} containing the statistics of the install operation.
+     * @return An instance of {@link SyncResult} containing the statistics of the install operation.
      * @throws IOException If an error occurred during the install operation.
      * @throws DependencyResolutionException If an error occurred during the dependency resolution.
      */
-    public SyncStats install(String[] artifactNames)
+    public SyncResult install(String[] artifactNames)
             throws IOException, DependencyResolutionException {
         return install(artifactNames, Collections.emptyMap());
     }
@@ -158,18 +158,18 @@ public class Jpm {
      *
      * @param artifactNames The artifacts to install.
      * @param extraRepos A map of additional repository names to URLs where artifacts can be found.
-     * @return An instance of {@link SyncStats} containing the statistics of the install operation.
+     * @return An instance of {@link SyncResult} containing the statistics of the install operation.
      * @throws IOException If an error occurred during the install operation.
      * @throws DependencyResolutionException If an error occurred during the dependency resolution.
      */
-    public SyncStats install(String[] artifactNames, Map<String, String> extraRepos)
+    public SyncResult install(String[] artifactNames, Map<String, String> extraRepos)
             throws IOException, DependencyResolutionException {
         AppInfo appInfo = AppInfo.read();
         String[] artifacts = getArtifacts(artifactNames, appInfo);
         Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (artifacts.length > 0) {
             List<Path> files = Resolver.create(artifacts, repos).resolvePaths();
-            SyncStats stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
+            SyncResult stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
             if (artifactNames.length > 0) {
                 for (String dep : artifactNames) {
                     int p = dep.lastIndexOf(':');
@@ -182,7 +182,7 @@ public class Jpm {
             }
             return stats;
         } else {
-            return new SyncStats();
+            return new SyncResult();
         }
     }
 
@@ -216,7 +216,13 @@ public class Jpm {
         String[] deps = getArtifacts(artifactNames, appInfo);
         Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (deps.length > 0) {
-            return Resolver.create(deps, repos).resolvePaths();
+            List<Path> files = Resolver.create(deps, repos).resolvePaths();
+            if (artifactNames.length > 0) {
+                return files;
+            } else {
+                SyncResult result = FileUtils.syncArtifacts(files, directory, noLinks, true);
+                return result.files;
+            }
         } else {
             return Collections.emptyList();
         }

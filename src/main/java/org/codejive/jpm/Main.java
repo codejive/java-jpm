@@ -5,7 +5,7 @@
 //DEPS org.jline:jline-console-ui:3.30.5 org.jline:jline-terminal-jni:3.30.5
 //DEPS org.slf4j:slf4j-api:2.0.17 org.slf4j:slf4j-simple:2.0.17
 //SOURCES Jpm.java config/AppInfo.java util/CommandsParser.java util/FileUtils.java util/Resolver.java
-//SOURCES util/ScriptUtils.java util/SearchResult.java util/SearchUtils.java util/SyncStats.java util/Version.java
+//SOURCES util/ScriptUtils.java util/SearchResult.java util/SearchUtils.java util/SyncResult.java util/Version.java
 // spotless:on
 
 package org.codejive.jpm;
@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import org.codejive.jpm.util.SyncStats;
+import org.codejive.jpm.util.SyncResult;
 import org.codejive.jpm.util.Version;
 import org.jline.consoleui.elements.InputValue;
 import org.jline.consoleui.elements.ListChoice;
@@ -78,7 +78,7 @@ public class Main {
 
         @Override
         public Integer call() throws Exception {
-            SyncStats stats =
+            SyncResult stats =
                     Jpm.builder()
                             .directory(artifactsMixin.depsMixin.directory)
                             .noLinks(artifactsMixin.depsMixin.noLinks)
@@ -142,7 +142,7 @@ public class Main {
                         String selectedArtifact = getSelectedId(result, "item");
                         String artifactAction = getSelectedId(result, "action");
                         if ("install".equals(artifactAction)) {
-                            SyncStats stats =
+                            SyncResult stats =
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
@@ -152,7 +152,7 @@ public class Main {
                                 printStats(stats);
                             }
                         } else if ("copy".equals(artifactAction)) {
-                            SyncStats stats =
+                            SyncResult stats =
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
@@ -286,7 +286,7 @@ public class Main {
 
         @Override
         public Integer call() throws Exception {
-            SyncStats stats =
+            SyncResult stats =
                     Jpm.builder()
                             .directory(optionalArtifactsMixin.depsMixin.directory)
                             .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
@@ -627,7 +627,7 @@ public class Main {
         private boolean quiet;
     }
 
-    private static void printStats(SyncStats stats) {
+    private static void printStats(SyncResult stats) {
         System.err.printf(
                 "Artifacts new: %d, updated: %d, deleted: %d%n",
                 (Integer) stats.copied, (Integer) stats.updated, (Integer) stats.deleted);
