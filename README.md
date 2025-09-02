@@ -272,3 +272,11 @@ To build the project simply run:
 ```shell
 ./mvnw spotless:apply clean install
 ```
+
+Of course, once you've got `jpm` installed you can do:
+
+```shell
+jpm clean build
+jpm test
+jpm run
+```
