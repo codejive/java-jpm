@@ -3,6 +3,19 @@
 
 Use the following to create a release and deploy it:
 
+## Step 1 - Run Release Workflow
+
+- Go to https://github.com/codejive/java-jpm/actions/workflows/release.yml
+- Select "Run workflow"
+- Enter the version you want to give the new release
+- Hit "Run workflow"
+
+## Step 2
+
+There is no step two!
+
+# Manual release instructions (old)
+
 ## Step 1 - Set release versions
 
 ```bash
