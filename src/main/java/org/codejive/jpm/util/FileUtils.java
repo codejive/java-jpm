@@ -21,13 +21,13 @@ public class FileUtils {
      * @param directory target directory
      * @param noLinks if true, copy artifacts instead of creating symbolic links
      * @param noDelete if true, do not delete artifacts that are no longer needed
-     * @return An instance of {@link SyncStats} with statistics about the synchronization
+     * @return An instance of {@link SyncResult} with statistics about the synchronization
      * @throws IOException if an error occurred during the synchronization
      */
-    public static SyncStats syncArtifacts(
+    public static SyncResult syncArtifacts(
             List<Path> artifacts, Path directory, boolean noLinks, boolean noDelete)
             throws IOException {
-        SyncStats stats = new SyncStats();
+        SyncResult stats = new SyncResult();
 
         // Make sure the target directory exists
         Files.createDirectories(directory);
@@ -46,12 +46,18 @@ public class FileUtils {
         // Copy artifacts
         for (Path artifact : artifacts) {
             String artifactName = artifact.getFileName().toString();
+            artifactsToDelete.remove(artifactName);
             Path target = directory.resolve(artifactName);
+            stats.files.add(target);
             if (!Files.exists(target)) {
                 copyDependency(artifact, directory, noLinks);
-                artifactsToDelete.remove(artifactName);
                 stats.copied++;
             } else if (Files.isSymbolicLink(target) == noLinks) {
+                copyDependency(artifact, directory, noLinks);
+                stats.updated++;
+            } else if (Files.size(target) != Files.size(artifact)
+                    || !Files.getLastModifiedTime(target)
+                            .equals(Files.getLastModifiedTime(artifact))) {
                 copyDependency(artifact, directory, noLinks);
                 stats.updated++;
             }
@@ -82,7 +88,11 @@ public class FileUtils {
                 // fall through and try again by simply copying the file
             }
         }
-        Files.copy(artifact, target, StandardCopyOption.REPLACE_EXISTING);
+        Files.copy(
+                artifact,
+                target,
+                StandardCopyOption.REPLACE_EXISTING,
+                StandardCopyOption.COPY_ATTRIBUTES);
     }
 
     public static Path safePath(String w) {
