@@ -33,6 +33,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <mainClass>org.codejive.jpm.Main</mainClass>
         <version.mima>2.4.34</version.mima>
+        <version.search-backend>7.1.6</version.search-backend>
         <version.picocli>4.7.7</version.picocli>
         <version.snakeyaml>2.5</version.snakeyaml>
         <version.jline>3.30.5</version.jline>
@@ -54,6 +55,11 @@
             <groupId>eu.maveniverse.maven.mima.runtime</groupId>
             <artifactId>standalone-static</artifactId>
             <version>${version.mima}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.indexer</groupId>
+            <artifactId>search-backend-smo</artifactId>
+            <version>${version.search-backend}</version>
         </dependency>
         <dependency>
             <groupId>info.picocli</groupId>

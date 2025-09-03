@@ -121,9 +121,22 @@ public class Jpm {
      * @throws IOException If an error occurred during the search.
      */
     public String[] search(String artifactPattern, int count) throws IOException {
+        return search(artifactPattern, count, null);
+    }
+
+    /**
+     * Searches for artifacts matching the given pattern.
+     *
+     * @param artifactPattern The pattern to search for.
+     * @param count The maximum number of results to return.
+     * @return An array of artifact names matching the given pattern.
+     * @throws IOException If an error occurred during the search.
+     */
+    public String[] search(String artifactPattern, int count, Search.Backends backend)
+            throws IOException {
         List<Artifact> artifacts = new ArrayList<>();
         int max = count <= 0 || count > 200 ? 200 : count;
-        Search s = Search.getBackend(null);
+        Search s = Search.getBackend(backend);
         Search.SearchResult result = s.findArtifacts(artifactPattern, max);
         while (result != null) {
             artifacts.addAll(result.artifacts);

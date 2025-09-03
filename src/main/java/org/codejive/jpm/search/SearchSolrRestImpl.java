@@ -19,7 +19,22 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 /** Utility class for searching Maven artifacts. */
-public class SearchSmoRestImpl implements Search {
+public class SearchSolrRestImpl implements Search {
+    private final String baseSearchUrl;
+    private final boolean offsetInPages;
+
+    public static SearchSolrRestImpl createSmo() {
+        return new SearchSolrRestImpl("https://search.maven.org/solrsearch/select", false);
+    }
+
+    public static SearchSolrRestImpl createCsc() {
+        return new SearchSolrRestImpl("https://central.sonatype.com/solrsearch/select", true);
+    }
+
+    private SearchSolrRestImpl(String baseSearchUrl, boolean offsetInPages) {
+        this.baseSearchUrl = baseSearchUrl;
+        this.offsetInPages = offsetInPages;
+    }
 
     /**
      * Find artifacts matching the given pattern. This will return the first page of results. If the
@@ -48,16 +63,21 @@ public class SearchSmoRestImpl implements Search {
      */
     public Search.SearchResult findNextArtifacts(Search.SearchResult prevResult)
             throws IOException {
-        if (prevResult.start + prevResult.count >= prevResult.total) {
-            return null;
+        if (offsetInPages) {
+            if ((prevResult.start + 1) * prevResult.count >= prevResult.total) {
+                return null;
+            }
+        } else {
+            if (prevResult.start + prevResult.count >= prevResult.total) {
+                return null;
+            }
         }
-        Search.SearchResult result =
-                select(prevResult.query, prevResult.start + prevResult.count, prevResult.count);
+        int start = offsetInPages ? prevResult.start + 1 : prevResult.start + prevResult.count;
+        Search.SearchResult result = select(prevResult.query, start, prevResult.count);
         return result.artifacts.isEmpty() ? null : result;
     }
 
-    private static Search.SearchResult select(String query, int start, int count)
-            throws IOException {
+    private Search.SearchResult select(String query, int start, int count) throws IOException {
         String[] parts = query.split(":", -1);
         String finalQuery;
         if (parts.length >= 3) {
@@ -66,15 +86,17 @@ public class SearchSmoRestImpl implements Search {
         } else if (parts.length == 2) {
             // Partial group/artifact match, we will filter the results
             // to remove those that match an inverted artifact/group
-            finalQuery = String.format("%s AND %s", parts[0], parts[1]);
+            finalQuery = String.format("%s %s", parts[0], parts[1]);
         } else {
             // Simple partial match
             finalQuery = query;
         }
         String searchUrl =
                 String.format(
-                        "https://search.maven.org/solrsearch/select?start=%d&rows=%d&q=%s",
-                        start, count, URLEncoder.encode(finalQuery, "UTF-8"));
+                        this.baseSearchUrl + "?start=%d&rows=%d&q=%s",
+                        start,
+                        count,
+                        URLEncoder.encode(finalQuery, "UTF-8"));
         if (parts.length >= 3) {
             searchUrl += "&core=gav";
         }
@@ -87,29 +109,25 @@ public class SearchSmoRestImpl implements Search {
         try (CloseableHttpClient httpClient = HttpClients.custom().setUserAgent(agent).build()) {
             HttpGet request = new HttpGet(searchUrl);
             try (CloseableHttpResponse response = httpClient.execute(request)) {
-                if (response.getStatusLine().getStatusCode() != 200) {
-                    throw new IOException(
+                int code = response.getStatusLine().getStatusCode();
+                if (code != 200) {
+                    String err =
                             "Search failed: Maven Central Search API returned an error: "
                                     + response.getStatusLine().getStatusCode()
                                     + " "
-                                    + response.getStatusLine().getReasonPhrase());
+                                    + response.getStatusLine().getReasonPhrase();
+                    if (code >= 500 && code < 600) {
+                        err +=
+                                ". The service might be temporarily unavailable. You can try with a different search backend, run again using the -b option. ";
+                    }
+                    throw new IOException(err);
                 }
-                DumperOptions dopts = new DumperOptions();
-                Constructor cons = new Constructor(MvnSearchResult.class, new LoaderOptions());
-                Representer representer = new Representer(dopts);
-                representer.getPropertyUtils().setSkipMissingProperties(true);
-                Yaml yaml = new Yaml(cons, representer, dopts);
                 InputStream ins = response.getEntity().getContent();
-                InputStreamReader rdr = new InputStreamReader(ins);
-                MvnSearchResult result = yaml.load(rdr);
-                if (result.responseHeader.status != 0) {
-                    throw new IOException(
-                            "Search failed: Maven Central Search API returned a response that could not be understood");
-                }
+                MvnSearchResult result = parseSearchResult(ins);
                 List<DefaultArtifact> artifacts =
                         result.response.docs.stream()
                                 .filter(d -> acceptDoc(d, parts))
-                                .map(SearchSmoRestImpl::toArtifact)
+                                .map(SearchSolrRestImpl::toArtifact)
                                 .collect(Collectors.toList());
                 return new Search.SearchResult(
                         artifacts, query, start, count, result.response.numFound);
@@ -117,9 +135,24 @@ public class SearchSmoRestImpl implements Search {
         }
     }
 
+    private static MvnSearchResult parseSearchResult(InputStream ins) throws IOException {
+        DumperOptions dopts = new DumperOptions();
+        Constructor cons = new Constructor(MvnSearchResult.class, new LoaderOptions());
+        Representer representer = new Representer(dopts);
+        representer.getPropertyUtils().setSkipMissingProperties(true);
+        Yaml yaml = new Yaml(cons, representer, dopts);
+        InputStreamReader rdr = new InputStreamReader(ins);
+        MvnSearchResult result = yaml.load(rdr);
+        if (result.responseHeader.status != 0) {
+            throw new IOException(
+                    "Search failed: Maven Search API did not return a valid response");
+        }
+        return result;
+    }
+
     private static boolean acceptDoc(MsrDoc d, String[] parts) {
         return d.ec != null
-                && d.ec.contains(".jar")
+                && (d.ec.contains(".jar") || d.ec.contains("jar"))
                 && (parts.length != 2 || d.g.contains(parts[0]) && d.a.contains(parts[1]));
     }
 
