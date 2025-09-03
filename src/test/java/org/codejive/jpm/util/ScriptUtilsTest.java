@@ -257,4 +257,12 @@ class ScriptUtilsTest {
             assertThat(argsFiles.files.get(1)).hasContent(expectedContents2);
         }
     }
+
+    @Test
+    void testProcessCommandWithInvalidClasspath() {
+        String command = "./mvnw spotless:apply package -DskipTests";
+        String result = ScriptUtils.suggestSubstitutions(command);
+        // Substitutions should not have treated spottless:apply as a classpath
+        assertThat(result).isEqualTo("{./mvnw} spotless:apply package -DskipTests");
+    }
 }
