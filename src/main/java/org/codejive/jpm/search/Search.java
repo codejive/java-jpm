@@ -33,20 +33,26 @@ public interface Search {
     SearchResult findNextArtifacts(SearchResult prevResult) throws IOException;
 
     enum Backends {
-        SMO_REST("smo-rest");
-
-        public final String label;
-
-        Backends(String label) {
-            this.label = label;
-        }
+        rest_smo,
+        rest_csc,
+        smo_smo,
+        smo_csc;
     }
 
     static Search getBackend(Backends backend) {
-        if (backend == Backends.SMO_REST) {
-            return new SearchSmoRestImpl();
+        if (backend != null) {
+            switch (backend) {
+                case rest_smo:
+                    return SearchSolrRestImpl.createSmo();
+                case rest_csc:
+                    return SearchSolrRestImpl.createCsc();
+                case smo_smo:
+                    return SearchSmoApiImpl.createSmo();
+                case smo_csc:
+                    return SearchSmoApiImpl.createCsc();
+            }
         }
-        return new SearchSmoRestImpl();
+        return SearchSolrRestImpl.createSmo();
     }
 
     /**

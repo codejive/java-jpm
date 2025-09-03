@@ -1,6 +1,7 @@
 dependencies:
   eu.maveniverse.maven.mima:context: "2.4.33"
   eu.maveniverse.maven.mima.runtime:standalone-static: "2.4.33"
+  org.apache.maven.indexer:search-backend-smo: "7.1.6"
   info.picocli:picocli: "4.7.7"
   org.yaml:snakeyaml: "2.4"
   org.jline:jline-console-ui: "3.30.5"
