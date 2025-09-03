@@ -34,9 +34,9 @@ public interface Search {
 
     enum Backends {
         rest_smo,
-        rest_csc,
-        smo_smo,
-        smo_csc;
+        rest_csc;
+        //        smo_smo,
+        //        smo_csc;
     }
 
     static Search getBackend(Backends backend) {
@@ -46,10 +46,10 @@ public interface Search {
                     return SearchSolrRestImpl.createSmo();
                 case rest_csc:
                     return SearchSolrRestImpl.createCsc();
-                case smo_smo:
-                    return SearchSmoApiImpl.createSmo();
-                case smo_csc:
-                    return SearchSmoApiImpl.createCsc();
+                    //                case smo_smo:
+                    //                    return SearchSmoApiImpl.createSmo();
+                    //                case smo_csc:
+                    //                    return SearchSmoApiImpl.createCsc();
             }
         }
         return SearchSolrRestImpl.createSmo();
