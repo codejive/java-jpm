@@ -115,10 +115,10 @@ actions:
 You can execute actions using the `jpm do` command:
 
 ```shell
-$ jpm do build
-$ jpm do run --arg fubar
-$ jpm do build -a --verbose run -a fubar
-$ jpm do --list    # Lists all available actions
+$ jpm do --list                 # Lists all available actions
+$ jpm do build                  # Runs the build action
+$ jpm do run --arg foo -a bar   # Passes "foo" and "bar" to the run action
+$ jpm do build -a --verbose run -a fubar   # Passes "--verbose" to build and "fubar" to run
 ```
 
 Or use the convenient alias commands that exist especially for "clean", "build", "test" and "run":
