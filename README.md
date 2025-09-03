@@ -279,7 +279,7 @@ To build the project simply run:
 Of course, once you've got `jpm` installed you can do:
 
 ```shell
-jpm clean build
+jpm do clean build
 jpm test
 jpm run
 ```
