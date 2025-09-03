@@ -1,4 +1,4 @@
-package org.codejive.jpm.util;
+package org.codejive.jpm.search;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -10,6 +10,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.codejive.jpm.util.Version;
 import org.eclipse.aether.artifact.DefaultArtifact;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -18,7 +19,7 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 /** Utility class for searching Maven artifacts. */
-public class SearchUtils {
+public class SearchSmoRestImpl implements Search {
 
     /**
      * Find artifacts matching the given pattern. This will return the first page of results. If the
@@ -30,31 +31,33 @@ public class SearchUtils {
      *
      * @param artifactPattern The pattern to search for.
      * @param count The maximum number of results to return.
-     * @return The search result as an instance of {@link SearchResult}.
+     * @return The search result as an instance of {@link Search.SearchResult}.
      * @throws IOException If an error occurred during the search.
      */
-    public static SearchResult findArtifacts(String artifactPattern, int count) throws IOException {
+    public Search.SearchResult findArtifacts(String artifactPattern, int count) throws IOException {
         return select(artifactPattern, 0, count);
     }
 
     /**
-     * Find the next page of artifacts. This takes a {@link SearchResult} returned by a previous
-     * call to {@link #findArtifacts(String, int)} and returns the next page of results.
+     * Find the next page of artifacts. This takes a {@link Search.SearchResult} returned by a
+     * previous call to {@link #findArtifacts(String, int)} and returns the next page of results.
      *
      * @param prevResult The previous search result.
-     * @return The next search result as an instance of {@link SearchResult}.
+     * @return The next search result as an instance of {@link Search.SearchResult}.
      * @throws IOException If an error occurred during the search.
      */
-    public static SearchResult findNextArtifacts(SearchResult prevResult) throws IOException {
+    public Search.SearchResult findNextArtifacts(Search.SearchResult prevResult)
+            throws IOException {
         if (prevResult.start + prevResult.count >= prevResult.total) {
             return null;
         }
-        SearchResult result =
+        Search.SearchResult result =
                 select(prevResult.query, prevResult.start + prevResult.count, prevResult.count);
         return result.artifacts.isEmpty() ? null : result;
     }
 
-    private static SearchResult select(String query, int start, int count) throws IOException {
+    private static Search.SearchResult select(String query, int start, int count)
+            throws IOException {
         String[] parts = query.split(":", -1);
         String finalQuery;
         if (parts.length >= 3) {
@@ -106,9 +109,10 @@ public class SearchUtils {
                 List<DefaultArtifact> artifacts =
                         result.response.docs.stream()
                                 .filter(d -> acceptDoc(d, parts))
-                                .map(SearchUtils::toArtifact)
+                                .map(SearchSmoRestImpl::toArtifact)
                                 .collect(Collectors.toList());
-                return new SearchResult(artifacts, query, start, count, result.response.numFound);
+                return new Search.SearchResult(
+                        artifacts, query, start, count, result.response.numFound);
             }
         }
     }
