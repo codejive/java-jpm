@@ -10,9 +10,9 @@ dependencies:
   org.slf4j:slf4j-simple: "2.0.17"
 
 actions:
-  clean: ".{/}mvnw clean"
-  build: ".{/}mvnw spotless:apply package -DskipTests"
-  run: "{./target/binary/bin/jpm}"
-  test: ".{/}mvnw test"
+  clean: "./mvnw clean"
+  build: "./mvnw spotless:apply package -DskipTests"
+  run: "./target/binary/bin/jpm"
+  test: "./mvnw test"
   buildj: "javac -cp {{deps}} -d classes --source-path src/main/java src/main/java/org/codejive/jpm/Main.java"
   runj: "java -cp classes:{{deps}} org.codejive.jpm.Main"

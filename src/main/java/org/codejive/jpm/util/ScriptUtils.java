@@ -37,14 +37,7 @@ public class ScriptUtils {
                 (isWindows() && tmpCommand.length() > 8000)
                         || (!isWindows() && tmpCommand.length() > 32000);
 
-        if (!usingSubstitutions(command)) {
-            // First try to parse the command
-            CommandsParser parser = new CommandsParser(command);
-            CommandsParser.Commands commands = parser.parse();
-            if (commands != null) {
-                command = suggestSubstitutions(commands);
-            }
-        }
+        command = suggestSubstitutions(command);
 
         try (ArgsFiles argsFiles = new ArgsFiles()) {
             // Process the command for variable substitution and path conversion
@@ -73,6 +66,18 @@ public class ScriptUtils {
         return arg;
     }
 
+    static String suggestSubstitutions(String command) {
+        if (!usingSubstitutions(command)) {
+            // First try to parse the command
+            CommandsParser parser = new CommandsParser(command);
+            CommandsParser.Commands commands = parser.parse();
+            if (commands != null) {
+                command = suggestCommandsSubstitutions(commands);
+            }
+        }
+        return command;
+    }
+
     // Is the command using any substitutions? (we ignore {{deps}} here)
     private static boolean usingSubstitutions(String command) {
         command = command.replace("{]}", "\u0007");
@@ -80,14 +85,14 @@ public class ScriptUtils {
         return pattern.matcher(command).find();
     }
 
-    static String suggestSubstitutions(CommandsParser.Commands commands) {
+    private static String suggestCommandsSubstitutions(CommandsParser.Commands commands) {
         StringBuilder cmd = new StringBuilder();
         for (CommandsParser.Node node : commands.elements) {
             if (node instanceof CommandsParser.Command) {
-                cmd.append(suggestSubstitutions((CommandsParser.Command) node));
+                cmd.append(suggestCommandSubstitutions((CommandsParser.Command) node));
             } else if (node instanceof CommandsParser.Group) {
                 CommandsParser.Group group = (CommandsParser.Group) node;
-                String groupStr = suggestSubstitutions(group.commands);
+                String groupStr = suggestCommandsSubstitutions(group.commands);
                 cmd.append("(").append(groupStr).append(")");
             } else if (node instanceof CommandsParser.Separator) {
                 CommandsParser.Separator sep = (CommandsParser.Separator) node;
@@ -101,7 +106,7 @@ public class ScriptUtils {
         return cmd.toString();
     }
 
-    static String suggestSubstitutions(CommandsParser.Command command) {
+    static String suggestCommandSubstitutions(CommandsParser.Command command) {
         StringBuilder cmd = new StringBuilder();
         if (command.words.isEmpty()) {
             return "";
@@ -179,12 +184,30 @@ public class ScriptUtils {
         if (parts.length <= 1) {
             return null;
         }
+        // First see if this plausibly looks like a classpath
+        // This requires at least one part to be a relative path with
+        // at least two parts (i.e. have at least one / in it)
+        // This does mean that it won't suggest substitutions for
+        // classpaths that are all single-name parts (e.g. "lib:ext").
+        if (!classpath.contains("{{deps}}")) {
+            boolean hasAtLeastOneComplexPart = false;
+            for (String path : parts) {
+                Path p = FileUtils.safePath(path);
+                if (p == null || p.isAbsolute()) {
+                    return null;
+                }
+                if (p.getNameCount() >= 2) {
+                    hasAtLeastOneComplexPart = true;
+                }
+            }
+            if (!hasAtLeastOneComplexPart) {
+                return null;
+            }
+        }
+        // Now do the actual conversion
         StringBuilder sb = new StringBuilder();
         for (String path : parts) {
             Path p = FileUtils.safePath(path);
-            if (p == null || p.isAbsolute()) {
-                return null;
-            }
             if (sb.length() == 0) {
                 // Looks like a relative path, let's suggest {./...} or {~/...}
                 if (p.startsWith("~")) {
