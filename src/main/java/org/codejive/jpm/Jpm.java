@@ -5,6 +5,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.codejive.jpm.config.AppInfo;
+import org.codejive.jpm.search.Search;
 import org.codejive.jpm.util.*;
 import org.eclipse.aether.artifact.Artifact;
 import org.eclipse.aether.resolution.DependencyResolutionException;
@@ -122,10 +123,11 @@ public class Jpm {
     public String[] search(String artifactPattern, int count) throws IOException {
         List<Artifact> artifacts = new ArrayList<>();
         int max = count <= 0 || count > 200 ? 200 : count;
-        SearchResult result = SearchUtils.findArtifacts(artifactPattern, max);
+        Search s = Search.getBackend(null);
+        Search.SearchResult result = s.findArtifacts(artifactPattern, max);
         while (result != null) {
             artifacts.addAll(result.artifacts);
-            result = count <= 0 ? SearchUtils.findNextArtifacts(result) : null;
+            result = count <= 0 ? s.findNextArtifacts(result) : null;
         }
         return artifacts.stream().map(Jpm::artifactGav).toArray(String[]::new);
     }

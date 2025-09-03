@@ -4,8 +4,8 @@
 //DEPS org.yaml:snakeyaml:2.4
 //DEPS org.jline:jline-console-ui:3.30.5 org.jline:jline-terminal-jni:3.30.5
 //DEPS org.slf4j:slf4j-api:2.0.17 org.slf4j:slf4j-simple:2.0.17
-//SOURCES Jpm.java config/AppInfo.java util/CommandsParser.java util/FileUtils.java util/Resolver.java
-//SOURCES util/ScriptUtils.java util/SearchResult.java util/SearchUtils.java util/SyncResult.java util/Version.java
+//SOURCES Jpm.java config/AppInfo.java search/Search.java search/SearchSmoRestImpl.java util/CommandsParser.java
+//SOURCES util/FileUtils.java util/Resolver.java util/ScriptUtils.java util/SyncResult.java util/Version.java
 // spotless:on
 
 package org.codejive.jpm;
@@ -45,16 +45,16 @@ import picocli.CommandLine.Unmatched;
         versionProvider = Version.class,
         description = "Simple command line tool for managing Maven artifacts",
         subcommands = {
-            Main.Copy.class,
             Main.Search.class,
             Main.Install.class,
+            Main.Copy.class,
             Main.PrintPath.class,
-            Main.Exec.class,
             Main.Do.class,
             Main.Clean.class,
             Main.Build.class,
             Main.Run.class,
-            Main.Test.class
+            Main.Test.class,
+            Main.Exec.class
         })
 public class Main {
 
