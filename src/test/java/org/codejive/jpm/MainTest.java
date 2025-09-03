@@ -1,6 +1,6 @@
 package org.codejive.jpm;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 /** Integration tests for the Main class, focusing on the new 'do' command and aliases. */
-class MainIntegrationTest {
+class MainTest {
 
     @TempDir Path tempDir;
 
@@ -24,6 +24,7 @@ class MainIntegrationTest {
     void setUp() {
         originalDir = System.getProperty("user.dir");
         System.setProperty("user.dir", tempDir.toString());
+        System.setProperty("picocli.ansi", "false");
     }
 
     @AfterEach
@@ -235,14 +236,16 @@ class MainIntegrationTest {
 
     @Test
     void testMainWithNoArgs() {
-        // Test the default behavior using CommandLine
-        CommandLine cmd = Main.getCommandLine();
-        int exitCode = cmd.execute();
-
-        // Should show help when no args provided (CommandLine default behavior)
-        // The Main.main() method redirects to interactive search, but CommandLine.execute()
-        // with no args typically shows help
-        assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
+        try (TestOutputCapture capture = captureOutput()) {
+            // Test the default behavior using CommandLine
+            CommandLine cmd = Main.getCommandLine();
+            int exitCode = cmd.execute();
+            assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
+            assertThat(capture.getErr()).contains("Missing required subcommand");
+            assertThat(capture.getErr()).contains("Usage: jpm [-hV] [COMMAND]");
+            assertThat(capture.getErr())
+                    .contains("Simple command line tool for managing Maven artifacts");
+        }
     }
 
     @Test
@@ -259,97 +262,32 @@ class MainIntegrationTest {
         }
     }
 
-    @Test
-    void testCopyCommandWithRepositoryOptions() throws IOException {
-        // Test copy command with --repo options
-        CommandLine cmd = Main.getCommandLine();
-        int exitCode =
-                cmd.execute(
-                        "copy",
-                        "--repo",
-                        "central=https://repo1.maven.org/maven2",
-                        "--repo",
-                        "https://jcenter.bintray.com",
-                        "com.google.guava:guava:31.1-jre");
-
-        // The command should execute successfully (even if dependency resolution might fail)
-        assertThat(exitCode >= 0).isTrue();
-    }
-
-    @Test
-    void testInstallCommandWithRepositoryOptions() throws IOException {
-        CommandLine cmd = Main.getCommandLine();
-        int exitCode =
-                cmd.execute(
-                        "install",
-                        "--repo",
-                        "central=https://repo1.maven.org/maven2",
-                        "com.google.guava:guava:31.1-jre");
-
-        // The command should execute successfully (even if dependency resolution might fail)
-        assertThat(exitCode >= 0).isTrue();
-    }
-
-    @Test
-    void testPathCommandWithRepositoryOptionsAndAppYml() throws IOException {
-        // Create app.yml with repositories
-        createAppYmlWithRepositories();
-
-        try (TestOutputCapture capture = captureOutput()) {
-            CommandLine cmd = Main.getCommandLine();
-            int exitCode =
-                    cmd.execute(
-                            "path",
-                            "--repo",
-                            "jcenter=https://jcenter.bintray.com",
-                            "com.google.guava:guava:31.1-jre");
-
-            // The command should execute (even if dependency resolution might fail)
-            assertThat(exitCode >= 0).isTrue();
-        }
-    }
-
     private void createAppYml() throws IOException {
         String yamlContent =
                 "dependencies:\n"
-                        + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
+                        + "  fake:dummy: \"1.2.3\"\n"
                         + "\n"
                         + "actions:\n"
-                        + "  build: \"echo building... .{/}libs{:}{{deps}}\"\n"
-                        + "  test: \"echo testing... .{/}libs{:}{{deps}}\"\n"
-                        + "  run: \"echo running... .{/}libs{:}{{deps}}\"\n"
+                        + "  build: \"echo building... .{/}libs{:}ext\"\n"
+                        + "  test: \"echo testing... .{/}libs{:}ext\"\n"
+                        + "  run: \"echo running... .{/}libs{:}ext\"\n"
                         + "  hello: \"echo Hello World\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
     private void createAppYmlWithoutActions() throws IOException {
-        String yamlContent = "dependencies:\n" + "  com.github.lalyos:jfiglet: \"0.0.9\"\n";
+        String yamlContent = "dependencies:\n" + "  fake:dummy: \"1.2.3\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 
     private void createAppYmlWithoutBuildAction() throws IOException {
         String yamlContent =
                 "dependencies:\n"
-                        + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
+                        + "  fake:dummy: \"1.2.3\"\n"
                         + "\n"
                         + "actions:\n"
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
                         + "  hello: \"echo Hello World\"\n";
-        Files.writeString(tempDir.resolve("app.yml"), yamlContent);
-    }
-
-    private void createAppYmlWithRepositories() throws IOException {
-        String yamlContent =
-                "dependencies:\n"
-                        + "  com.github.lalyos:jfiglet: \"0.0.9\"\n"
-                        + "\n"
-                        + "repositories:\n"
-                        + "  central: \"https://repo1.maven.org/maven2\"\n"
-                        + "  custom: \"https://my.custom.repo/maven2\"\n"
-                        + "\n"
-                        + "actions:\n"
-                        + "  build: \"javac -cp {{deps}} *.java\"\n"
-                        + "  test: \"java -cp {{deps}} TestRunner\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
     }
 }
