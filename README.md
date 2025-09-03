@@ -102,9 +102,11 @@ dependencies:
   com.github.lalyos:jfiglet:0.0.9
 
 actions:
+  setup: "echo Do some actual work here..."
   build: "javac -cp {{deps}} *.java"
   run: "java -cp {{deps}} HelloWorld"
   test: "java -cp {{deps}} TestRunner"
+  it: "java -cp {{deps}} IntegrationTestRunner"
   clean: "rm -f *.class"
 ```
 
@@ -114,11 +116,12 @@ You can execute actions using the `jpm do` command:
 
 ```shell
 $ jpm do build
-$ jpm do run
+$ jpm do run --arg fubar
+$ jpm do build -a --verbose run -a fubar
 $ jpm do --list    # Lists all available actions
 ```
 
-Or use the convenient alias commands:
+Or use the convenient alias commands that exist especially for "clean", "build", "test" and "run":
 
 ```shell
 $ jpm build        # Executes the 'build' action
