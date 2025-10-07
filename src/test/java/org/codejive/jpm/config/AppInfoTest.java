@@ -20,7 +20,7 @@ class AppInfoTest {
         Path appYmlPath = tempDir.resolve("app.yml");
         String yamlContent =
                 "dependencies:\n"
-                        + "  com.example:test-lib: \"1.0.0\"\n"
+                        + "  - com.example:test-lib:1.0.0\n"
                         + "\n"
                         + "actions:\n"
                         + "  build: \"javac -cp {{deps}} *.java\"\n"
@@ -51,8 +51,8 @@ class AppInfoTest {
             assertThat(appInfo.getAction("nonexistent")).isNull();
 
             // Test dependencies are still parsed correctly
-            assertThat(appInfo.dependencies).hasSize(1);
-            assertThat(appInfo.dependencies).containsEntry("com.example:test-lib", "1.0.0");
+            assertThat(appInfo.dependencies()).hasSize(1);
+            assertThat(appInfo.dependencies()).contains("com.example:test-lib:1.0.0");
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -62,7 +62,7 @@ class AppInfoTest {
     void testReadAppInfoWithoutActions() throws IOException {
         // Create a test app.yml file without actions
         Path appYmlPath = tempDir.resolve("app.yml");
-        String yamlContent = "dependencies:\n" + "  com.example:test-lib: \"1.0.0\"\n";
+        String yamlContent = "dependencies:\n" + "  - com.example:test-lib:1.0.0\n";
         Files.writeString(appYmlPath, yamlContent);
 
         String originalDir = System.getProperty("user.dir");
@@ -76,7 +76,7 @@ class AppInfoTest {
             assertThat(appInfo.getAction("build")).isNull();
 
             // Test dependencies are still parsed correctly
-            assertThat(appInfo.dependencies).hasSize(1);
+            assertThat(appInfo.dependencies()).hasSize(1);
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -93,7 +93,7 @@ class AppInfoTest {
 
             // Test no actions and no dependencies
             assertThat(appInfo.getActionNames()).isEmpty();
-            assertThat(appInfo.dependencies).isEmpty();
+            assertThat(appInfo.dependencies()).isEmpty();
             assertThat(appInfo.getAction("build")).isNull();
         } finally {
             System.setProperty("user.dir", originalDir);
@@ -103,9 +103,9 @@ class AppInfoTest {
     @Test
     void testWriteAppInfoWithActions() throws IOException {
         AppInfo appInfo = new AppInfo();
-        appInfo.dependencies.put("com.example:test-lib", "1.0.0");
-        appInfo.actions.put("build", "javac -cp {{deps}} *.java");
-        appInfo.actions.put("test", "java -cp {{deps}} TestRunner");
+        appInfo.dependencies().add("com.example:test-lib:1.0.0");
+        appInfo.actions().put("build", "javac -cp {{deps}} *.java");
+        appInfo.actions().put("test", "java -cp {{deps}} TestRunner");
 
         String originalDir = System.getProperty("user.dir");
         System.setProperty("user.dir", tempDir.toString());
@@ -122,7 +122,7 @@ class AppInfoTest {
             assertThat(readBack.getAction("build")).isEqualTo("javac -cp {{deps}} *.java");
             assertThat(readBack.getAction("test")).isEqualTo("java -cp {{deps}} TestRunner");
             assertThat(readBack.getActionNames()).hasSize(2);
-            assertThat(readBack.dependencies).hasSize(1);
+            assertThat(readBack.dependencies()).hasSize(1);
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -133,7 +133,7 @@ class AppInfoTest {
         Path appYmlPath = tempDir.resolve("app.yml");
         String yamlContent =
                 "dependencies:\n"
-                        + "  com.example:test-lib: \"1.0.0\"\n"
+                        + "  - com.example:test-lib:1.0.0\n"
                         + "\n"
                         + "actions:\n"
                         + "  complex: \"java -cp {{deps}} -Dprop=value MainClass arg1 arg2\"\n"
@@ -166,7 +166,7 @@ class AppInfoTest {
         Path appYmlPath = tempDir.resolve("app.yml");
         String yamlContent =
                 "dependencies:\n"
-                        + "  com.example:test-lib: \"1.0.0\"\n"
+                        + "  - com.example:test-lib:1.0.0\n"
                         + "\n"
                         + "repositories:\n"
                         + "  central: \"https://repo1.maven.org/maven2\"\n"
@@ -181,15 +181,15 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test repository retrieval
-            assertThat(appInfo.repositories).hasSize(3);
-            assertThat(appInfo.repositories)
+            assertThat(appInfo.repositories()).hasSize(3);
+            assertThat(appInfo.repositories())
                     .containsEntry("central", "https://repo1.maven.org/maven2")
                     .containsEntry("jcenter", "https://jcenter.bintray.com")
                     .containsEntry("custom", "https://my.custom.repo/maven2");
 
             // Test dependencies are still parsed correctly
-            assertThat(appInfo.dependencies).hasSize(1);
-            assertThat(appInfo.dependencies).containsEntry("com.example:test-lib", "1.0.0");
+            assertThat(appInfo.dependencies()).hasSize(1);
+            assertThat(appInfo.dependencies()).contains("com.example:test-lib:1.0.0");
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -199,7 +199,7 @@ class AppInfoTest {
     void testReadAppInfoWithoutRepositories() throws IOException {
         // Create a test app.yml file without repositories
         Path appYmlPath = tempDir.resolve("app.yml");
-        String yamlContent = "dependencies:\n" + "  com.example:test-lib: \"1.0.0\"\n";
+        String yamlContent = "dependencies:\n" + "  - com.example:test-lib:1.0.0\n";
         Files.writeString(appYmlPath, yamlContent);
 
         String originalDir = System.getProperty("user.dir");
@@ -209,10 +209,10 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test no repositories
-            assertThat(appInfo.repositories).isEmpty();
+            assertThat(appInfo.repositories()).isEmpty();
 
             // Test dependencies are still parsed correctly
-            assertThat(appInfo.dependencies).hasSize(1);
+            assertThat(appInfo.dependencies()).hasSize(1);
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -221,9 +221,9 @@ class AppInfoTest {
     @Test
     void testWriteAppInfoWithRepositories() throws IOException {
         AppInfo appInfo = new AppInfo();
-        appInfo.dependencies.put("com.example:test-lib", "1.0.0");
-        appInfo.repositories.put("central", "https://repo1.maven.org/maven2");
-        appInfo.repositories.put("custom", "https://my.custom.repo/maven2");
+        appInfo.dependencies().add("com.example:test-lib:1.0.0");
+        appInfo.repositories().put("central", "https://repo1.maven.org/maven2");
+        appInfo.repositories().put("custom", "https://my.custom.repo/maven2");
 
         String originalDir = System.getProperty("user.dir");
         System.setProperty("user.dir", tempDir.toString());
@@ -237,11 +237,11 @@ class AppInfoTest {
 
             // Read it back and verify
             AppInfo readBack = AppInfo.read();
-            assertThat(readBack.repositories).hasSize(2);
-            assertThat(readBack.repositories)
+            assertThat(readBack.repositories()).hasSize(2);
+            assertThat(readBack.repositories())
                     .containsEntry("central", "https://repo1.maven.org/maven2")
                     .containsEntry("custom", "https://my.custom.repo/maven2");
-            assertThat(readBack.dependencies).hasSize(1);
+            assertThat(readBack.dependencies()).hasSize(1);
         } finally {
             System.setProperty("user.dir", originalDir);
         }
@@ -250,7 +250,7 @@ class AppInfoTest {
     @Test
     void testWriteAppInfoWithoutRepositories() throws IOException {
         AppInfo appInfo = new AppInfo();
-        appInfo.dependencies.put("com.example:test-lib", "1.0.0");
+        appInfo.dependencies().add("com.example:test-lib:1.0.0");
         // No repositories added
 
         String originalDir = System.getProperty("user.dir");
@@ -261,8 +261,8 @@ class AppInfoTest {
 
             // Read it back and verify repositories section is not present
             AppInfo readBack = AppInfo.read();
-            assertThat(readBack.repositories).isEmpty();
-            assertThat(readBack.dependencies).hasSize(1);
+            assertThat(readBack.repositories()).isEmpty();
+            assertThat(readBack.dependencies()).hasSize(1);
 
             // Also verify the YAML content doesn't contain repositories section
             String content = Files.readString(tempDir.resolve("app.yml"));
@@ -277,7 +277,7 @@ class AppInfoTest {
         Path appYmlPath = tempDir.resolve("app.yml");
         String yamlContent =
                 "dependencies:\n"
-                        + "  com.example:test-lib: \"1.0.0\"\n"
+                        + "  - com.example:test-lib:1.0.0\n"
                         + "\n"
                         + "repositories:\n"
                         + "  central: \"https://repo1.maven.org/maven2\"\n"
@@ -294,11 +294,11 @@ class AppInfoTest {
             AppInfo appInfo = AppInfo.read();
 
             // Test all sections are parsed correctly
-            assertThat(appInfo.dependencies).hasSize(1);
-            assertThat(appInfo.repositories).hasSize(2);
+            assertThat(appInfo.dependencies()).hasSize(1);
+            assertThat(appInfo.repositories()).hasSize(2);
             assertThat(appInfo.getActionNames()).hasSize(1);
 
-            assertThat(appInfo.repositories)
+            assertThat(appInfo.repositories())
                     .containsEntry("central", "https://repo1.maven.org/maven2")
                     .containsEntry(
                             "sonatype-snapshots",
