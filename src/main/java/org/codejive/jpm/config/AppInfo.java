@@ -27,6 +27,38 @@ public class AppInfo {
     /** The official name of the app.yml file. */
     public static final String APP_INFO_FILE = "app.yml";
 
+    public String name() {
+        return (String) yaml.get("name");
+    }
+
+    public String description() {
+        return (String) yaml.get("description");
+    }
+
+    public String documentation() {
+        return (String) yaml.get("documentation");
+    }
+
+    public String java() {
+        return (String) yaml.get("java");
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> authors() {
+        if (yaml.get("authors") instanceof List) {
+            return (List<String>) yaml.get("authors");
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> contributors() {
+        if (yaml.get("contributors") instanceof List) {
+            return (List<String>) yaml.get("contributors");
+        }
+        return null;
+    }
+
     public List<String> dependencies() {
         return dependencies;
     }

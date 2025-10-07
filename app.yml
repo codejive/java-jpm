@@ -1,18 +1,38 @@
-dependencies:
-  eu.maveniverse.maven.mima:context: "2.4.33"
-  eu.maveniverse.maven.mima.runtime:standalone-static: "2.4.33"
-  org.apache.maven.indexer:search-backend-smo: "7.1.6"
-  info.picocli:picocli: "4.7.7"
-  org.yaml:snakeyaml: "2.4"
-  org.jline:jline-console-ui: "3.30.5"
-  org.jline:jline-terminal-jni: "3.30.5"
-  org.slf4j:slf4j-api: "2.0.17"
-  org.slf4j:slf4j-simple: "2.0.17"
+name: jpm
+description: A simple command line tool to manage Maven dependencies for Java projects
+  that are not using build systems like Maven or Gradle
+documentation: |
+  # jpm - Java Package Manager
 
+  A simple command line tool to manage Maven dependencies for Java projects that are not using build systems like Maven
+  or Gradle.
+
+  It takes inspiration from Node's npm but is more focused on managing dependencies and
+  is _not_ a build tool. Keep using Maven and Gradle for that. This tool is ideal for those who want to compile and
+  run Java code directly without making their lives difficult the moment they want to start using dependencies.
+authors:
+- Tako Schotanus (tako@codejive.org)
+contributors:
+- copilot
+links:
+  homepage: https://github.com/codejive/java-jpm
+  repository: https://github.com/codejive/java-jpm
+  documentation: https://github.com/codejive/java-jpm/edit/main/README.md
+java: 11
+dependencies:
+  eu.maveniverse.maven.mima:context: 2.4.33
+  eu.maveniverse.maven.mima.runtime:standalone-static: 2.4.33
+  org.apache.maven.indexer:search-backend-smo: 7.1.6
+  info.picocli:picocli: 4.7.7
+  org.yaml:snakeyaml: '2.4'
+  org.jline:jline-console-ui: 3.30.5
+  org.jline:jline-terminal-jni: 3.30.5
+  org.slf4j:slf4j-api: 2.0.17
+  org.slf4j:slf4j-simple: 2.0.17
 actions:
-  clean: "./mvnw clean"
-  build: "./mvnw spotless:apply package -DskipTests"
-  run: "./target/binary/bin/jpm"
-  test: "./mvnw test"
-  buildj: "javac -cp {{deps}} -d classes --source-path src/main/java src/main/java/org/codejive/jpm/Main.java"
-  runj: "java -cp classes:{{deps}} org.codejive.jpm.Main"
+  clean: ./mvnw clean
+  build: ./mvnw spotless:apply package -DskipTests
+  run: ./target/binary/bin/jpm
+  test: ./mvnw test
+  buildj: javac -cp {{deps}} -d classes --source-path src/main/java src/main/java/org/codejive/jpm/Main.java
+  runj: java -cp classes:{{deps}} org.codejive.jpm.Main
