@@ -57,25 +57,54 @@ public class AppInfo {
 
     /**
      * Reads the app.yml file in the current directory and returns its content as an AppInfo object.
+     * If the file does not exist, an empty AppInfo object is returned.
      *
      * @return An instance of AppInfo
      * @throws IOException if an error occurred while reading or parsing the file
      */
     @SuppressWarnings("unchecked")
     public static AppInfo read() throws IOException {
-        Path prjJson = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
-        AppInfo appInfo = new AppInfo();
-        if (Files.isRegularFile(prjJson)) {
-            try (Reader in = Files.newBufferedReader(prjJson)) {
-                Yaml yaml = new Yaml();
-                appInfo.yaml = yaml.load(in);
+        Path appInfoFile = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
+        return read(appInfoFile);
+    }
+
+    /**
+     * Reads the app.yml file in the current directory and returns its content as an AppInfo object.
+     * If the file does not exist, an empty AppInfo object is returned.
+     *
+     * @param appInfoFile The path to the app.yml file
+     * @return An instance of AppInfo
+     * @throws IOException if an error occurred while reading or parsing the file
+     */
+    @SuppressWarnings("unchecked")
+    public static AppInfo read(Path appInfoFile) throws IOException {
+        if (Files.isRegularFile(appInfoFile)) {
+            try (Reader in = Files.newBufferedReader(appInfoFile)) {
+                return read(in);
             }
         }
+        return new AppInfo();
+    }
+
+    /**
+     * Reads the app.yml from the given Reader and returns its content as an AppInfo object.
+     *
+     * @param in The Reader to read the app.yml content from
+     * @return An instance of AppInfo
+     */
+    @SuppressWarnings("unchecked")
+    public static AppInfo read(Reader in) {
+        AppInfo appInfo = new AppInfo();
+        Yaml yaml = new Yaml();
+        appInfo.yaml = yaml.load(in);
         // Ensure yaml is never null
         if (appInfo.yaml == null) {
             appInfo.yaml = new LinkedHashMap<>();
         }
+        // We now take any known information from the Yaml map and transfer it to their
+        // respective fields in the AppInfo object, leaving unknown information untouched
         // WARNING awful code ahead
+        // Parse dependencies section
         if (appInfo.yaml.containsKey("dependencies")
                 && appInfo.yaml.get("dependencies") instanceof Map) {
             Map<String, Object> deps = (Map<String, Object>) appInfo.yaml.get("dependencies");
@@ -109,25 +138,48 @@ public class AppInfo {
      */
     @SuppressWarnings("unchecked")
     public static void write(AppInfo appInfo) throws IOException {
-        Path prjJson = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
-        try (Writer out = Files.newBufferedWriter(prjJson)) {
-            DumperOptions dopts = new DumperOptions();
-            dopts.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            dopts.setPrettyFlow(true);
-            Yaml yaml = new Yaml(dopts);
-            // WARNING awful code ahead
-            appInfo.yaml.put("dependencies", (Map<String, Object>) (Map) appInfo.dependencies);
-            if (!appInfo.repositories.isEmpty()) {
-                appInfo.yaml.put("repositories", (Map<String, Object>) (Map) appInfo.repositories);
-            } else {
-                appInfo.yaml.remove("repositories");
-            }
-            if (!appInfo.actions.isEmpty()) {
-                appInfo.yaml.put("actions", (Map<String, Object>) (Map) appInfo.actions);
-            } else {
-                appInfo.yaml.remove("actions");
-            }
-            yaml.dump(appInfo.yaml, out);
+        Path appInfoFile = Paths.get(System.getProperty("user.dir"), APP_INFO_FILE);
+        write(appInfo, appInfoFile);
+    }
+
+    /**
+     * Writes the AppInfo object to the given path.
+     *
+     * @param appInfo The AppInfo object to write
+     * @param appInfoFile The path to write the app.yml file to
+     * @throws IOException if an error occurred while writing the file
+     */
+    @SuppressWarnings("unchecked")
+    public static void write(AppInfo appInfo, Path appInfoFile) throws IOException {
+        try (Writer out = Files.newBufferedWriter(appInfoFile)) {
+            write(appInfo, out);
         }
+    }
+
+    /**
+     * Writes the AppInfo object to the given Writer.
+     *
+     * @param appInfo The AppInfo object to write
+     * @param out The Writer to write to
+     */
+    @SuppressWarnings("unchecked")
+    public static void write(AppInfo appInfo, Writer out) {
+        DumperOptions dopts = new DumperOptions();
+        dopts.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        dopts.setPrettyFlow(true);
+        Yaml yaml = new Yaml(dopts);
+        // WARNING awful code ahead
+        appInfo.yaml.put("dependencies", (Map<String, Object>) (Map) appInfo.dependencies);
+        if (!appInfo.repositories.isEmpty()) {
+            appInfo.yaml.put("repositories", (Map<String, Object>) (Map) appInfo.repositories);
+        } else {
+            appInfo.yaml.remove("repositories");
+        }
+        if (!appInfo.actions.isEmpty()) {
+            appInfo.yaml.put("actions", (Map<String, Object>) (Map) appInfo.actions);
+        } else {
+            appInfo.yaml.remove("actions");
+        }
+        yaml.dump(appInfo.yaml, out);
     }
 }
