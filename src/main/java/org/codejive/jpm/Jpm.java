@@ -186,13 +186,8 @@ public class Jpm {
             List<Path> files = Resolver.create(artifacts, repos).resolvePaths();
             SyncResult stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
             if (artifactNames.length > 0) {
-                for (String dep : artifactNames) {
-                    int p = dep.lastIndexOf(':');
-                    String name = dep.substring(0, p);
-                    String version = dep.substring(p + 1);
-                    appInfo.dependencies.put(name, version);
-                }
-                appInfo.repositories.putAll(repos);
+                appInfo.dependencies().addAll(Arrays.asList(artifactNames));
+                appInfo.repositories().putAll(repos);
                 AppInfo.write(appInfo);
             }
             return stats;
@@ -254,7 +249,7 @@ public class Jpm {
     }
 
     private Map<String, String> getRepositories(Map<String, String> extraRepos, AppInfo appInfo) {
-        Map<String, String> repos = new HashMap<>(appInfo.repositories);
+        Map<String, String> repos = new HashMap<>(appInfo.repositories());
         repos.putAll(extraRepos);
         return repos;
     }
