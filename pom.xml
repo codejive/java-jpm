@@ -36,7 +36,7 @@
         <version.search-backend>7.1.6</version.search-backend>
         <version.picocli>4.7.7</version.picocli>
         <version.snakeyaml>2.5</version.snakeyaml>
-        <version.jline>3.30.5</version.jline>
+        <version.jline>3.30.6</version.jline>
         <version.slf4j>2.0.17</version.slf4j>
         <version.spotless>2.46.1</version.spotless>
         <version.google-java-format>1.22.0</version.google-java-format>
