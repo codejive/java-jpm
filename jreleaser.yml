@@ -36,6 +36,10 @@ assemble:
         path: 'target/{{distributionName}}-{{projectVersion}}.jar'
       jars:
         - pattern: 'target/binary/lib/*.jar'
+      fileSets:
+        - input: '.'
+          includes:
+            - 'LICENSE'
 
   nativeImage:
     jpm-native:
