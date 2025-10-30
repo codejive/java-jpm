@@ -108,7 +108,7 @@ ls -la
 - Uses PicoCLI for command parsing, Maven Resolver for dependency resolution
 
 ## CI and Release Information
-- CI runs on Ubuntu with Java 11 (Temurin distribution)
+- CI runs on Ubuntu with Java 21 (Temurin distribution)
 - Build command: `mvn -B verify jreleaser:assemble -Prelease`
 - Spotless formatting check is enforced - builds fail if formatting is incorrect
 - Release uses JReleaser for GitHub releases and Maven Central deployment

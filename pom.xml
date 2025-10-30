@@ -34,9 +34,9 @@
         <mainClass>org.codejive.jpm.Main</mainClass>
         <version.mima>2.4.35</version.mima>
         <version.search-backend>7.1.6</version.search-backend>
+        <version.jline>3.30.6</version.jline>
         <version.picocli>4.7.7</version.picocli>
         <version.snakeyaml>2.5</version.snakeyaml>
-        <version.jline>3.30.6</version.jline>
         <version.slf4j>2.0.17</version.slf4j>
         <version.spotless>3.0.0</version.spotless>
         <version.google-java-format>1.22.0</version.google-java-format>
@@ -62,16 +62,6 @@
             <version>${version.search-backend}</version>
         </dependency>
         <dependency>
-            <groupId>info.picocli</groupId>
-            <artifactId>picocli</artifactId>
-            <version>${version.picocli}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.yaml</groupId>
-            <artifactId>snakeyaml</artifactId>
-            <version>${version.snakeyaml}</version>
-        </dependency>
-        <dependency>
             <groupId>org.jline</groupId>
             <artifactId>jline-console-ui</artifactId>
             <version>${version.jline}</version>
@@ -80,6 +70,16 @@
             <groupId>org.jline</groupId>
             <artifactId>jline-terminal-jni</artifactId>
             <version>${version.jline}</version>
+        </dependency>
+        <dependency>
+            <groupId>info.picocli</groupId>
+            <artifactId>picocli</artifactId>
+            <version>${version.picocli}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>${version.snakeyaml}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -136,11 +136,6 @@
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>build-helper-maven-plugin</artifactId>
                     <version>3.6.1</version>
-                </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.4</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>

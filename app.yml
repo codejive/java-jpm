@@ -17,7 +17,7 @@ contributors:
 links:
   homepage: https://github.com/codejive/java-jpm
   repository: https://github.com/codejive/java-jpm
-  documentation: https://github.com/codejive/java-jpm/edit/main/README.md
+  documentation: https://github.com/codejive/java-jpm/blob/main/README.md
 java: 11
 dependencies:
   eu.maveniverse.maven.mima:context: 2.4.33

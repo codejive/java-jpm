@@ -45,13 +45,13 @@ assemble:
     jpm-native:
       active: NEVER
       java:
-        version: '22'
+        version: '25'
       imageName: '{{distributionName}}-{{projectEffectiveVersion}}'
       executable: jpm
       mainJar:
-        path: 'target/jpm-{{projectVersion}}-cli.jar'
+        path: 'target/{{distributionName}}-{{projectVersion}}-cli.jar'
       graalJdks:
-        - path: 'C:\Users\tako\.jbang\cache\jdks\22'
+        - path: 'C:\Users\tako\.jbang\cache\jdks\25'
           platform: 'windows-x86_64'
       upx:
         active: NEVER
