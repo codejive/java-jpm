@@ -32,7 +32,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <mainClass>org.codejive.jpm.Main</mainClass>
-        <version.mima>2.4.35</version.mima>
+        <version.mima>2.4.36</version.mima>
         <version.search-backend>7.1.6</version.search-backend>
         <version.jline>3.30.6</version.jline>
         <version.picocli>4.7.7</version.picocli>
