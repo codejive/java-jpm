@@ -61,6 +61,10 @@ import picocli.CommandLine.Unmatched;
         })
 public class Main {
 
+    static boolean verbose = false;
+
+    @Mixin VerboseMixin verboseMixin;
+
     @Command(
             name = "copy",
             aliases = {"c"},
@@ -69,6 +73,7 @@ public class Main {
                             + "By default jpm will try to create symbolic links to conserve space.\n\n"
                             + "Example:\n  jpm copy org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Copy implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin ArtifactsMixin artifactsMixin;
 
@@ -107,6 +112,7 @@ public class Main {
                             + "match the given (partial) name.\n\n"
                             + "Example:\n  jpm search httpclient\n")
     static class Search implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin DepsMixin depsMixin;
 
@@ -290,6 +296,7 @@ public class Main {
                             + "If no artifacts are passed the app.yml file will be left untouched and only the existing dependencies in the file will be copied.\n\n"
                             + "Example:\n  jpm install org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Install implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
 
@@ -318,6 +325,7 @@ public class Main {
                             + "If no artifacts are passed the classpath for the dependencies defined in the app.yml file will be printed instead.\n\n"
                             + "Example:\n  jpm path org.apache.httpcomponents:httpclient:4.5.14\n")
     static class PrintPath implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
 
         @Override
@@ -367,6 +375,7 @@ public class Main {
                             + "  jpm exec javac -cp {{deps}} -d out/classes --source-path src/main/java App.java\n"
                             + "  jpm exec @kotlinc -cp {{deps}} -d out/classes src/main/kotlin/App.kt\n")
     static class Exec implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
 
@@ -403,6 +412,7 @@ public class Main {
                             + "  jpm do test --arg verbose\n"
                             + "  jpm do build -a --fresh test -a verbose\n")
     static class Do implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
 
@@ -496,6 +506,7 @@ public class Main {
     }
 
     abstract static class DoAlias implements Callable<Integer> {
+        @Mixin VerboseMixin verboseMixin;
         @Mixin DepsMixin depsMixin;
 
         @Unmatched List<String> args = new ArrayList<>();
@@ -628,6 +639,15 @@ public class Main {
         private String[] artifactNames = {};
     }
 
+    static class VerboseMixin {
+        @Option(
+                names = {"-v", "--verbose"},
+                description = "Enable verbose output for debugging")
+        public void setVerbose(boolean verbose) {
+            Main.verbose = verbose;
+        }
+    }
+
     static class QuietMixin {
         @Option(
                 names = {"-q", "--quiet"},
@@ -642,11 +662,24 @@ public class Main {
                 (Integer) stats.copied, (Integer) stats.updated, (Integer) stats.deleted);
     }
 
+    static CommandLine.IExecutionExceptionHandler errorHandler =
+            (ex, commandLine, parseResult) -> {
+                System.err.println("Error: " + ex.getMessage());
+                if (verbose) {
+                    ex.printStackTrace();
+                } else {
+                    System.err.println(
+                            "(Run with --verbose for more details. If you believe you found a bug in jpm, open an issue at https://github.com/codejive/java-jpm/issues)");
+                }
+                return commandLine.getCommandSpec().exitCodeOnExecutionException();
+            };
+
     public static CommandLine getCommandLine() {
         return new CommandLine(new Main())
                 .setStopAtPositional(true)
                 .setAllowOptionsAsOptionParameters(true)
-                .setAllowSubcommandsAsOptionParameters(true);
+                .setAllowSubcommandsAsOptionParameters(true)
+                .setExecutionExceptionHandler(errorHandler);
     }
 
     /**
