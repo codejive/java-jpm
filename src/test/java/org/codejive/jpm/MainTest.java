@@ -242,7 +242,7 @@ class MainTest {
             int exitCode = cmd.execute();
             assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
             assertThat(capture.getErr()).contains("Missing required subcommand");
-            assertThat(capture.getErr()).contains("Usage: jpm [-hV] [COMMAND]");
+            assertThat(capture.getErr()).contains("Usage: jpm [-hvV] [COMMAND]");
             assertThat(capture.getErr())
                     .contains("Simple command line tool for managing Maven artifacts");
         }
@@ -289,5 +289,17 @@ class MainTest {
                         + "  test: \"java -cp {{deps}} TestRunner\"\n"
                         + "  hello: \"echo Hello World\"\n";
         Files.writeString(tempDir.resolve("app.yml"), yamlContent);
+    }
+
+    @Test
+    void testVerboseFlag() {
+        try (TestOutputCapture capture = captureOutput()) {
+            CommandLine cmd = Main.getCommandLine();
+            int exitCode = cmd.execute("--help");
+            assertThat(exitCode).isEqualTo(0);
+            String output = capture.getOut();
+            assertThat(output).contains("-v, --verbose");
+            assertThat(output).contains("Enable verbose output for debugging");
+        }
     }
 }
