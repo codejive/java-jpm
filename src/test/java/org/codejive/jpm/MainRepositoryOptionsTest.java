@@ -12,7 +12,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithNamedRepositories() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories =
                 List.of(
                         "central=https://repo1.maven.org/maven2",
@@ -30,7 +30,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithUnnamedRepositories() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories =
                 List.of(
                         "https://repo1.maven.org/maven2",
@@ -49,7 +49,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithMixedRepositories() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories =
                 List.of(
                         "central=https://repo1.maven.org/maven2",
@@ -71,7 +71,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithEmptyList() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories = new ArrayList<>();
 
         Map<String, String> result = mixin.getRepositoryMap();
@@ -81,7 +81,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithInvalidUrls() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories =
                 List.of(
                         "invalid-url",
@@ -101,7 +101,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithEqualsInUrl() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories =
                 List.of(
                         "nexus=https://nexus.example.com/repository/maven-public/?foo=bar",
@@ -119,7 +119,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithDuplicateNames() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories =
                 List.of(
                         "central=https://repo1.maven.org/maven2",
@@ -134,7 +134,7 @@ class MainRepositoryOptionsTest {
 
     @Test
     void testGetRepositoryMapWithEmptyNameOrUrl() {
-        Main.BaseArtifactsMixin mixin = new Main.BaseArtifactsMixin();
+        Main.DepsMixin mixin = new Main.DepsMixin();
         mixin.repositories = List.of("=https://repo1.maven.org/maven2", "name=", "=");
 
         Map<String, String> result = mixin.getRepositoryMap();

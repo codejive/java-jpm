@@ -88,8 +88,9 @@ public class Main {
         public Integer call() throws Exception {
             SyncResult stats =
                     Jpm.builder()
-                            .directory(artifactsMixin.depsMixin.directory)
-                            .noLinks(artifactsMixin.depsMixin.noLinks)
+                            .directory(artifactsMixin.directory)
+                            .noLinks(artifactsMixin.noLinks)
+                            .cacheDir(artifactsMixin.cacheDir)
                             .build()
                             .copy(
                                     artifactsMixin.artifactNames,
@@ -162,9 +163,12 @@ public class Main {
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
+                                            .cacheDir(depsMixin.cacheDir)
                                             .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
-                                            .install(new String[] {selectedArtifact});
+                                            .install(
+                                                    new String[] {selectedArtifact},
+                                                    depsMixin.getRepositoryMap());
                             if (!quietMixin.quiet) {
                                 printStats(stats);
                             }
@@ -173,9 +177,13 @@ public class Main {
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
+                                            .cacheDir(depsMixin.cacheDir)
                                             .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
-                                            .copy(new String[] {selectedArtifact}, false);
+                                            .copy(
+                                                    new String[] {selectedArtifact},
+                                                    depsMixin.getRepositoryMap(),
+                                                    false);
                             if (!quietMixin.quiet) {
                                 printStats(stats);
                             }
@@ -211,6 +219,7 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
+                        .cacheDir(depsMixin.cacheDir)
                         .appFile(appInfoFileMixin.appInfoFile)
                         .build()
                         .search(artifactPattern, Math.min(max, 200), backend);
@@ -309,8 +318,9 @@ public class Main {
         public Integer call() throws Exception {
             SyncResult stats =
                     Jpm.builder()
-                            .directory(optionalArtifactsMixin.depsMixin.directory)
-                            .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
+                            .directory(optionalArtifactsMixin.directory)
+                            .noLinks(optionalArtifactsMixin.noLinks)
+                            .cacheDir(optionalArtifactsMixin.cacheDir)
                             .appFile(appInfoFileMixin.appInfoFile)
                             .build()
                             .install(
@@ -339,8 +349,9 @@ public class Main {
         public Integer call() throws Exception {
             List<Path> files =
                     Jpm.builder()
-                            .directory(optionalArtifactsMixin.depsMixin.directory)
-                            .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
+                            .directory(optionalArtifactsMixin.directory)
+                            .noLinks(optionalArtifactsMixin.noLinks)
+                            .cacheDir(optionalArtifactsMixin.cacheDir)
                             .appFile(appInfoFileMixin.appInfoFile)
                             .build()
                             .path(
@@ -386,6 +397,7 @@ public class Main {
         @Mixin VerboseMixin verboseMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
+        @Mixin AppInfoFileMixin appInfoFileMixin;
 
         @Parameters(paramLabel = "command", description = "The command to execute", arity = "0..*")
         private List<String> command;
@@ -397,9 +409,11 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
+                        .cacheDir(depsMixin.cacheDir)
+                        .appFile(appInfoFileMixin.appInfoFile)
                         .verbose(!quietMixin.quiet)
                         .build()
-                        .executeCommand(cmd);
+                        .executeCommand(cmd, depsMixin.getRepositoryMap());
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 return 1;
@@ -454,6 +468,7 @@ public class Main {
                             Jpm.builder()
                                     .directory(depsMixin.directory)
                                     .noLinks(depsMixin.noLinks)
+                                    .cacheDir(depsMixin.cacheDir)
                                     .appFile(appInfoFileMixin.appInfoFile)
                                     .build()
                                     .listActions();
@@ -499,10 +514,11 @@ public class Main {
                                 Jpm.builder()
                                         .directory(depsMixin.directory)
                                         .noLinks(depsMixin.noLinks)
+                                        .cacheDir(depsMixin.cacheDir)
                                         .appFile(appInfoFileMixin.appInfoFile)
                                         .verbose(!quietMixin.quiet)
                                         .build()
-                                        .executeAction(action, args);
+                                        .executeAction(action, args, depsMixin.getRepositoryMap());
                         if (exitCode != 0) {
                             return exitCode;
                         }
@@ -532,9 +548,10 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
+                        .cacheDir(depsMixin.cacheDir)
                         .appFile(appInfoFileMixin.appInfoFile)
                         .build()
-                        .executeAction(actionName(), args);
+                        .executeAction(actionName(), args, depsMixin.getRepositoryMap());
             } catch (Exception e) {
                 System.err.println(e.getMessage());
                 return 1;
@@ -594,16 +611,18 @@ public class Main {
                 description = "Always copy artifacts, don't try to create symlinks",
                 defaultValue = "false")
         boolean noLinks;
-    }
-
-    static class BaseArtifactsMixin {
-        @Mixin DepsMixin depsMixin;
 
         @Option(
                 names = {"-r", "--repo"},
                 description =
                         "URL to additional repository to use when resolving artifacts. Can be preceded by a name and an equals sign, e.g. -r myrepo=https://my.repo.com/maven2. When needing to pass user and password you can set JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD environment variables.")
         List<String> repositories = new ArrayList<>();
+
+        @Option(
+                names = {"-c", "--cache"},
+                description =
+                        "Directory where downloaded artifacts will be cached (default: value of JPM_CACHE environment variable; whatever is set in Maven's settings.xml or $HOME/.m2/repository")
+        Path cacheDir;
 
         Map<String, String> getRepositoryMap() {
             Map<String, String> repoMap = new HashMap<>();
@@ -634,7 +653,7 @@ public class Main {
         }
     }
 
-    static class ArtifactsMixin extends BaseArtifactsMixin {
+    static class ArtifactsMixin extends DepsMixin {
         @Parameters(
                 paramLabel = "artifacts",
                 description =
@@ -643,7 +662,7 @@ public class Main {
         private String[] artifactNames = {};
     }
 
-    static class OptionalArtifactsMixin extends BaseArtifactsMixin {
+    static class OptionalArtifactsMixin extends DepsMixin {
         @Parameters(
                 paramLabel = "artifacts",
                 description =

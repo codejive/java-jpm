@@ -24,21 +24,24 @@ import org.eclipse.aether.util.artifact.JavaScopes;
 public class Resolver {
     private final List<Artifact> artifacts;
     private final List<RemoteRepository> repositories;
+    private final Path cacheDir;
 
     private List<ArtifactResult> resolvedArtifacts;
 
-    public static Resolver create(String[] artifactNames, Map<String, String> repositories) {
-        return new Resolver(artifactNames, repositories);
+    public static Resolver create(
+            String[] artifactNames, Map<String, String> repositories, Path cacheDir) {
+        return new Resolver(artifactNames, repositories, cacheDir);
     }
 
-    private Resolver(String[] artifactNames, Map<String, String> repos) {
+    private Resolver(String[] artifactNames, Map<String, String> repos, Path cacheDir) {
         artifacts = parseArtifacts(artifactNames);
         repositories = parseRepositories(repos);
+        this.cacheDir = cacheDir;
     }
 
     public List<ArtifactResult> resolve() throws DependencyResolutionException {
         if (resolvedArtifacts == null) {
-            resolvedArtifacts = resolveArtifacts(artifacts, repositories);
+            resolvedArtifacts = resolveArtifacts(artifacts, repositories, cacheDir);
         }
         return resolvedArtifacts;
     }
@@ -58,7 +61,7 @@ public class Resolver {
      * @throws DependencyResolutionException if an error occurs while resolving the artifacts
      */
     public static List<ArtifactResult> resolveArtifacts(
-            List<Artifact> artifacts, List<RemoteRepository> repositories)
+            List<Artifact> artifacts, List<RemoteRepository> repositories, Path cacheDir)
             throws DependencyResolutionException {
         List<Dependency> dependencies =
                 artifacts.stream()
@@ -67,8 +70,7 @@ public class Resolver {
         ContextOverrides.Builder ctxb =
                 ContextOverrides.create()
                         .withUserSettings(true)
-                        .withLocalRepositoryOverride(
-                                FileUtils.safePath(System.getenv("JPM_CACHE")));
+                        .withLocalRepositoryOverride(cacheDir);
         if (repositories != null && !repositories.isEmpty()) {
             ctxb.repositories(repositories);
         }

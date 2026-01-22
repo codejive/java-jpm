@@ -15,12 +15,14 @@ public class Jpm {
     private final Path directory;
     private final boolean noLinks;
     private final Path appFile;
+    private final Path cacheDir;
     private final boolean verbose;
 
-    private Jpm(Path directory, boolean noLinks, Path appFile, boolean verbose) {
+    private Jpm(Path directory, boolean noLinks, Path appFile, Path cacheDir, boolean verbose) {
         this.directory = directory;
         this.noLinks = noLinks;
         this.appFile = appFile;
+        this.cacheDir = cacheDir;
         this.verbose = verbose;
     }
 
@@ -38,6 +40,7 @@ public class Jpm {
         private Path directory;
         private boolean noLinks;
         private Path appFile;
+        private Path cacheDir;
         private boolean verbose;
 
         private Builder() {}
@@ -76,6 +79,17 @@ public class Jpm {
         }
 
         /**
+         * Set the cache directory to use for downloaded artifacts.
+         *
+         * @param cacheDir The cache directory.
+         * @return The builder instance for chaining.
+         */
+        public Builder cacheDir(Path cacheDir) {
+            this.cacheDir = cacheDir;
+            return this;
+        }
+
+        /**
          * Set whether to enable verbose output or not.
          *
          * @param verbose Whether to enable verbose output or not.
@@ -92,7 +106,7 @@ public class Jpm {
          * @return A {@link Jpm} instance.
          */
         public Jpm build() {
-            return new Jpm(directory, noLinks, appFile, verbose);
+            return new Jpm(directory, noLinks, appFile, cacheDir, verbose);
         }
     }
 
@@ -122,7 +136,7 @@ public class Jpm {
      */
     public SyncResult copy(String[] artifactNames, Map<String, String> repos, boolean sync)
             throws IOException, DependencyResolutionException {
-        List<Path> files = Resolver.create(artifactNames, repos).resolvePaths();
+        List<Path> files = Resolver.create(artifactNames, repos, cacheDir).resolvePaths();
         return FileUtils.syncArtifacts(files, directory, noLinks, !sync);
     }
 
@@ -197,7 +211,7 @@ public class Jpm {
         String[] artifacts = getArtifacts(artifactNames, appInfo);
         Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (artifacts.length > 0) {
-            List<Path> files = Resolver.create(artifacts, repos).resolvePaths();
+            List<Path> files = Resolver.create(artifacts, repos, cacheDir).resolvePaths();
             SyncResult stats = FileUtils.syncArtifacts(files, directory, noLinks, true);
             if (artifactNames.length > 0) {
                 appInfo.dependencies().addAll(Arrays.asList(artifactNames));
@@ -240,7 +254,7 @@ public class Jpm {
         String[] deps = getArtifacts(artifactNames, appInfo);
         Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (deps.length > 0) {
-            List<Path> files = Resolver.create(deps, repos).resolvePaths();
+            List<Path> files = Resolver.create(deps, repos, cacheDir).resolvePaths();
             if (artifactNames.length > 0) {
                 return files;
             } else {
@@ -280,6 +294,23 @@ public class Jpm {
      */
     public int executeAction(String actionName, List<String> args)
             throws IOException, DependencyResolutionException, InterruptedException {
+        return executeAction(actionName, args, Collections.emptyMap());
+    }
+
+    /**
+     * Executes an action defined in app.yml file.
+     *
+     * @param actionName The name of the action to execute
+     * @param args A list of additional arguments to pass to the action command
+     * @param extraRepos A map of additional repository names to URLs where artifacts can be found.
+     * @return An integer containing the exit result of the action
+     * @throws IllegalArgumentException If the action name is not provided or not found
+     * @throws IOException If an error occurred during the operation
+     * @throws DependencyResolutionException If an error occurred during dependency resolution
+     * @throws InterruptedException If the action execution was interrupted
+     */
+    public int executeAction(String actionName, List<String> args, Map<String, String> extraRepos)
+            throws IOException, DependencyResolutionException, InterruptedException {
         AppInfo appInfo = readAppInfo();
 
         // Get the action command
@@ -299,7 +330,7 @@ public class Jpm {
                             .collect(Collectors.joining(" ", " ", ""));
         }
 
-        return executeCommand(command);
+        return executeCommand(command, extraRepos);
     }
 
     /**
@@ -324,10 +355,28 @@ public class Jpm {
      */
     public int executeCommand(String command)
             throws IOException, DependencyResolutionException, InterruptedException {
+        return executeCommand(command, Collections.emptyMap());
+    }
+
+    /**
+     * Executes an action defined in app.yml file.
+     *
+     * @param command The command to execute
+     * @param extraRepos A map of additional repository names to URLs where artifacts can be found.
+     * @return An integer containing the exit result of the action
+     * @throws IOException If an error occurred during the operation
+     * @throws DependencyResolutionException If an error occurred during dependency resolution
+     * @throws InterruptedException If the action execution was interrupted
+     */
+    public int executeCommand(String command, Map<String, String> extraRepos)
+            throws IOException, DependencyResolutionException, InterruptedException {
         // Get the classpath for variable substitution only if needed
         List<Path> classpath = Collections.emptyList();
         if (command.contains("{{deps}}")) {
-            classpath = this.path(new String[0]); // Empty array means use dependencies from app.yml
+            classpath =
+                    this.path(
+                            new String[0],
+                            extraRepos); // Empty array means use dependencies from app.yml
         }
 
         return ScriptUtils.executeScript(command, classpath, verbose);
