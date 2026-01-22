@@ -64,7 +64,11 @@ public class Resolver {
                 artifacts.stream()
                         .map(a -> new Dependency(a, JavaScopes.RUNTIME))
                         .collect(Collectors.toList());
-        ContextOverrides.Builder ctxb = ContextOverrides.create().withUserSettings(true);
+        ContextOverrides.Builder ctxb =
+                ContextOverrides.create()
+                        .withUserSettings(true)
+                        .withLocalRepositoryOverride(
+                                FileUtils.safePath(System.getenv("JPM_CACHE")));
         if (repositories != null && !repositories.isEmpty()) {
             ctxb.repositories(repositories);
         }

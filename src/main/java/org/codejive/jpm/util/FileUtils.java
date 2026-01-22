@@ -96,6 +96,9 @@ public class FileUtils {
     }
 
     public static Path safePath(String w) {
+        if (w == null) {
+            return null;
+        }
         try {
             return Paths.get(w);
         } catch (InvalidPathException e) {
