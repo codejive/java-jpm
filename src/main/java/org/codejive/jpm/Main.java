@@ -115,6 +115,7 @@ public class Main {
         @Mixin VerboseMixin verboseMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin DepsMixin depsMixin;
+        @Mixin AppInfoFileMixin appInfoFileMixin;
 
         @Option(
                 names = {"-i", "--interactive"},
@@ -161,6 +162,7 @@ public class Main {
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
+                                            .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
                                             .install(new String[] {selectedArtifact});
                             if (!quietMixin.quiet) {
@@ -171,6 +173,7 @@ public class Main {
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
+                                            .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
                                             .copy(new String[] {selectedArtifact}, false);
                             if (!quietMixin.quiet) {
@@ -208,6 +211,7 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
+                        .appFile(appInfoFileMixin.appInfoFile)
                         .build()
                         .search(artifactPattern, Math.min(max, 200), backend);
             } catch (IOException e) {
@@ -299,6 +303,7 @@ public class Main {
         @Mixin VerboseMixin verboseMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
+        @Mixin AppInfoFileMixin appInfoFileMixin;
 
         @Override
         public Integer call() throws Exception {
@@ -306,6 +311,7 @@ public class Main {
                     Jpm.builder()
                             .directory(optionalArtifactsMixin.depsMixin.directory)
                             .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
+                            .appFile(appInfoFileMixin.appInfoFile)
                             .build()
                             .install(
                                     optionalArtifactsMixin.artifactNames,
@@ -327,6 +333,7 @@ public class Main {
     static class PrintPath implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
+        @Mixin AppInfoFileMixin appInfoFileMixin;
 
         @Override
         public Integer call() throws Exception {
@@ -334,6 +341,7 @@ public class Main {
                     Jpm.builder()
                             .directory(optionalArtifactsMixin.depsMixin.directory)
                             .noLinks(optionalArtifactsMixin.depsMixin.noLinks)
+                            .appFile(appInfoFileMixin.appInfoFile)
                             .build()
                             .path(
                                     optionalArtifactsMixin.artifactNames,
@@ -415,6 +423,7 @@ public class Main {
         @Mixin VerboseMixin verboseMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
+        @Mixin AppInfoFileMixin appInfoFileMixin;
 
         @Option(
                 names = {"-l", "--list"},
@@ -445,6 +454,7 @@ public class Main {
                             Jpm.builder()
                                     .directory(depsMixin.directory)
                                     .noLinks(depsMixin.noLinks)
+                                    .appFile(appInfoFileMixin.appInfoFile)
                                     .build()
                                     .listActions();
                     if (actionNames.isEmpty()) {
@@ -489,6 +499,7 @@ public class Main {
                                 Jpm.builder()
                                         .directory(depsMixin.directory)
                                         .noLinks(depsMixin.noLinks)
+                                        .appFile(appInfoFileMixin.appInfoFile)
                                         .verbose(!quietMixin.quiet)
                                         .build()
                                         .executeAction(action, args);
@@ -508,6 +519,7 @@ public class Main {
     abstract static class DoAlias implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
         @Mixin DepsMixin depsMixin;
+        @Mixin AppInfoFileMixin appInfoFileMixin;
 
         @Unmatched List<String> args = new ArrayList<>();
 
@@ -520,6 +532,7 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
+                        .appFile(appInfoFileMixin.appInfoFile)
                         .build()
                         .executeAction(actionName(), args);
             } catch (Exception e) {
@@ -637,6 +650,13 @@ public class Main {
                         "One or more artifacts to resolve. Artifacts have the format <group>:<artifact>[:<extension>[:<classifier>]]:<version>",
                 arity = "0..*")
         private String[] artifactNames = {};
+    }
+
+    static class AppInfoFileMixin {
+        @Option(
+                names = {"-a", "--appinfo"},
+                description = "App info file to use (default './app.yml')")
+        Path appInfoFile;
     }
 
     static class VerboseMixin {

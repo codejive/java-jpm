@@ -14,11 +14,13 @@ import org.eclipse.aether.resolution.DependencyResolutionException;
 public class Jpm {
     private final Path directory;
     private final boolean noLinks;
+    private final Path appFile;
     private final boolean verbose;
 
-    private Jpm(Path directory, boolean noLinks, boolean verbose) {
+    private Jpm(Path directory, boolean noLinks, Path appFile, boolean verbose) {
         this.directory = directory;
         this.noLinks = noLinks;
+        this.appFile = appFile;
         this.verbose = verbose;
     }
 
@@ -35,6 +37,7 @@ public class Jpm {
     public static class Builder {
         private Path directory;
         private boolean noLinks;
+        private Path appFile;
         private boolean verbose;
 
         private Builder() {}
@@ -62,6 +65,17 @@ public class Jpm {
         }
 
         /**
+         * Set the app.yml file to use for the jpm commands.
+         *
+         * @param appFile The app.yml file.
+         * @return The builder instance for chaining.
+         */
+        public Builder appFile(Path appFile) {
+            this.appFile = appFile;
+            return this;
+        }
+
+        /**
          * Set whether to enable verbose output or not.
          *
          * @param verbose Whether to enable verbose output or not.
@@ -78,7 +92,7 @@ public class Jpm {
          * @return A {@link Jpm} instance.
          */
         public Jpm build() {
-            return new Jpm(directory, noLinks, verbose);
+            return new Jpm(directory, noLinks, appFile, verbose);
         }
     }
 
@@ -179,7 +193,7 @@ public class Jpm {
      */
     public SyncResult install(String[] artifactNames, Map<String, String> extraRepos)
             throws IOException, DependencyResolutionException {
-        AppInfo appInfo = AppInfo.read();
+        AppInfo appInfo = readAppInfo();
         String[] artifacts = getArtifacts(artifactNames, appInfo);
         Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (artifacts.length > 0) {
@@ -222,7 +236,7 @@ public class Jpm {
      */
     public List<Path> path(String[] artifactNames, Map<String, String> extraRepos)
             throws DependencyResolutionException, IOException {
-        AppInfo appInfo = AppInfo.read();
+        AppInfo appInfo = readAppInfo();
         String[] deps = getArtifacts(artifactNames, appInfo);
         Map<String, String> repos = getRepositories(extraRepos, appInfo);
         if (deps.length > 0) {
@@ -266,7 +280,7 @@ public class Jpm {
      */
     public int executeAction(String actionName, List<String> args)
             throws IOException, DependencyResolutionException, InterruptedException {
-        AppInfo appInfo = AppInfo.read();
+        AppInfo appInfo = readAppInfo();
 
         // Get the action command
         String command = appInfo.getAction(actionName);
@@ -295,7 +309,7 @@ public class Jpm {
      * @throws IOException If an error occurred during the operation
      */
     public List<String> listActions() throws IOException {
-        AppInfo appInfo = AppInfo.read();
+        AppInfo appInfo = readAppInfo();
         return new ArrayList<>(appInfo.getActionNames());
     }
 
@@ -317,5 +331,9 @@ public class Jpm {
         }
 
         return ScriptUtils.executeScript(command, classpath, verbose);
+    }
+
+    private AppInfo readAppInfo() throws IOException {
+        return (appFile != null) ? AppInfo.read(appFile) : AppInfo.read();
     }
 }
