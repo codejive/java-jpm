@@ -175,97 +175,298 @@ But you can also simply download and unzip the [release package](https://github.
 
 ## Usage
 
-See:
+### Main Command
 
 ```
-Usage: jpm [-hV] [COMMAND]
-Simple command line tool for managing Maven artifacts
+Usage: jpm [-hvV] [COMMAND]
+
+Options:
   -h, --help      Show this help message and exit.
+  -v, --verbose   Enable verbose output for debugging
   -V, --version   Print version information and exit.
+
 Commands:
-  copy, c     Resolves one or more artifacts and copies them and all their
-                dependencies to a target directory. By default jpm will try to
-                create symbolic links to conserve space.
+  search   Search for Maven artifacts in repositories.
+  install  Install artifacts and add them to app.yml dependencies.
+  copy     Copy artifacts to a directory without modifying app.yml.
+  path     Print the classpath for the specified artifacts or app.yml dependencies.
+  do       Execute an action defined in app.yml.
+  exec     Execute a shell command.
+```
 
-              Example:
-                jpm copy org.apache.httpcomponents:httpclient:4.5.14
+### Commands
 
-  search, s   Without arguments this command will start an interactive search
-                asking the user to provide details of the artifact to look for
-                and the actions to take. When provided with an argument this
-                command finds and returns the names of those artifacts that
-                match the given (partial) name.
+#### search (alias: s)
 
-              Example:
-                jpm search httpclient
+Search for Maven artifacts in repositories.
 
-  install, i  This adds the given artifacts to the list of dependencies
-                available in the app.yml file. It then behaves just like 'copy
-                --sync' and copies all artifacts in that list and all their
-                dependencies to the target directory while at the same time
-                removing any artifacts that are no longer needed (ie the ones
-                that are not mentioned in the app.yml file). If no artifacts
-                are passed the app.yml file will be left untouched and only the
-                existing dependencies in the file will be copied.
+```
+Usage: jpm search [-iLqv] [-a=<appInfoFile>] [-b=<backend>] [-c=<cacheDir>]
+                  [-d=<directory>] [-m=<max>] [-r=<repositories>]...
+                  artifactPattern
 
-              Example:
-                jpm install org.apache.httpcomponents:httpclient:4.5.14
+Parameters:
+  artifactPattern       Partial or full artifact name to search for.
 
-  path, p     Resolves one or more artifacts and prints the full classpath to
-                standard output. If no artifacts are passed the classpath for
-                the dependencies defined in the app.yml file will be printed
-                instead.
+Options:
+  -i, --interactive     Interactively search and select artifacts to install
+  -b, --backend=<backend>
+                        The search backend to use. Supported values:
+                          rest_smo, rest_csc
+  -m, --max=<max>       Maximum number of results to return
+  -a, --appinfo=<appInfoFile>
+                        App info file to use (default './app.yml')
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+                        (default: value of JPM_CACHE environment variable;
+                        whatever is set in Maven's settings.xml or
+                        $HOME/.m2/repository
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository to use when resolving
+                        artifacts. Can be preceded by a name and an equals
+                        sign, e.g. -r myrepo=https://my.repo.com/maven2.
+                        When needing to pass user and password you can set
+                        JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD
+                        environment variables.
+  -q, --quiet           Don't output non-essential information
+  -v, --verbose         Enable verbose output for debugging
 
-              Example:
-                jpm path org.apache.httpcomponents:httpclient:4.5.14
+Example:
+  jpm search httpclient
+```
 
-  exec        Executes a shell command that can use special tokens to deal with
-                OS-specific quirks like paths. This means that commands can be
-                written in a somewhat platform independent way and will work on
-                Windows, Linux and MacOS.
+#### install (alias: i)
 
-              Supported tokens and what they expand to:
-                {{deps}}  : the classpath of all dependencies defined in the app.yml file
-                {/} : the OS' file path separator
-                {:} : the OS' class path separator
-                {~} : the user's home directory using the OS' class path format
-                {;} : the OS' command separator
-                {./file/path} : a path using the OS' path format (must start with './'!)
-                {./lib:./ext} : a class path using the OS' class path format (must start with './'!)
-                @[ ... ] : writes contents to a file and inserts @<path-to-file> instead
+Install artifacts and add them to app.yml dependencies.
 
-              In actuality the command is pretty smart and will try to do the
-                right thing, as long as {{deps}} is the only token you use. In
-                the examples below the first line shows how to do it the hard
-                way, by specifying everything manually, while the second line
-                shows how much easier it is when you can rely on the built-in
-                smart feature. Is the smart feature bothering you? Just use any
-                of the other tokens besides {{deps}} and it will be turned off.
-                By default args files will only be considered for Java commands
-                that are know to support them (java, javac, javadoc, etc), but
-                you can indicate that your command supports it as well by
-                adding a single @ as the first character of the command.
+```
+Usage: jpm install [-Lqv] [-a=<appInfoFile>] [-c=<cacheDir>] [-d=<directory>]
+                   [-r=<repositories>]... [artifacts...]
 
-              Example:
-                jpm exec javac -cp @[{{deps}}] -d {./out/classes} --source-path {./src/main/java} App.java
-                jpm exec javac -cp {{deps}} -d out/classes --source-path src/main/java App.java
-                jpm exec @kotlinc -cp {{deps}} -d out/classes src/main/kotlin/App.kt
+Parameters:
+  [artifacts...]        One or more artifacts to resolve. Artifacts have the
+                        format <group>:<artifact>[:<extension>
+                        [:<classifier>]]:<version>
 
-  do          Executes an action command defined in the app.yml file. The
-                command is executed using the same rules as the exec command,
-                so it can use all the same tokens and features. You can also
-                pass additional arguments to the action using -a or --arg
-                followed by the argument value. You can chain multiple actions
-                and their arguments in a single command line.
-              Example:
-                jpm do build
-                jpm do test --arg verbose
-                jpm do build -a --fresh test -a verbose
+Options:
+  -a, --appinfo=<appInfoFile>
+                        App info file to use (default './app.yml')
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+                        (default: value of JPM_CACHE environment variable;
+                        whatever is set in Maven's settings.xml or
+                        $HOME/.m2/repository
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository to use when resolving
+                        artifacts. Can be preceded by a name and an equals
+                        sign, e.g. -r myrepo=https://my.repo.com/maven2.
+                        When needing to pass user and password you can set
+                        JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD
+                        environment variables.
+  -q, --quiet           Don't output non-essential information
+  -v, --verbose         Enable verbose output for debugging
 
-  clean       Executes the 'clean' action as defined in the app.yml file.
-  build       Executes the 'build' action as defined in the app.yml file.
-  run         Executes the 'run' action as defined in the app.yml file.
-  test        Executes the 'test' action as defined in the app.yml file.
+Example:
+  jpm install org.apache.httpcomponents:httpclient:4.5.14
+  jpm install                  # Install dependencies from app.yml
+```
+
+#### copy (alias: c)
+
+Copy artifacts to a directory without modifying app.yml.
+
+```
+Usage: jpm copy [-Lqsv] [-c=<cacheDir>] [-d=<directory>] [-r=<repositories>]...
+                artifacts...
+
+Parameters:
+  artifacts...          One or more artifacts to resolve. Artifacts have the
+                        format <group>:<artifact>[:<extension>
+                        [:<classifier>]]:<version>
+
+Options:
+  -s, --sync            Makes sure the target directory will only contain
+                        the mentioned artifacts and their dependencies,
+                        possibly removing other files present in the
+                        directory
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+                        (default: value of JPM_CACHE environment variable;
+                        whatever is set in Maven's settings.xml or
+                        $HOME/.m2/repository
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository to use when resolving
+                        artifacts. Can be preceded by a name and an equals
+                        sign, e.g. -r myrepo=https://my.repo.com/maven2.
+                        When needing to pass user and password you can set
+                        JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD
+                        environment variables.
+  -q, --quiet           Don't output non-essential information
+  -v, --verbose         Enable verbose output for debugging
+
+Example:
+  jpm copy org.apache.httpcomponents:httpclient:4.5.14
+```
+
+#### path (alias: p)
+
+Print the classpath for the specified artifacts or app.yml dependencies.
+
+```
+Usage: jpm path [-Lv] [-a=<appInfoFile>] [-c=<cacheDir>] [-d=<directory>]
+                [-r=<repositories>]... [artifacts...]
+
+Parameters:
+  [artifacts...]        One or more artifacts to resolve. Artifacts have the
+                        format <group>:<artifact>[:<extension>
+                        [:<classifier>]]:<version>
+
+Options:
+  -a, --appinfo=<appInfoFile>
+                        App info file to use (default './app.yml')
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+                        (default: value of JPM_CACHE environment variable;
+                        whatever is set in Maven's settings.xml or
+                        $HOME/.m2/repository
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository to use when resolving
+                        artifacts. Can be preceded by a name and an equals
+                        sign, e.g. -r myrepo=https://my.repo.com/maven2.
+                        When needing to pass user and password you can set
+                        JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD
+                        environment variables.
+  -v, --verbose         Enable verbose output for debugging
+
+Example:
+  jpm path org.apache.httpcomponents:httpclient:4.5.14
+  jpm path             # Print classpath from app.yml dependencies
+```
+
+#### do
+
+Execute an action defined in app.yml.
+
+```
+Usage: jpm do [-lLqv] [-a=<appInfoFile>] [-c=<cacheDir>] [-d=<directory>]
+              [-r=<repositories>]... [action...] [actionsAndArguments...]
+
+Parameters:
+  [action...]           Name of the action to execute as defined in app.yml
+  [actionsAndArguments...]
+                        Optional additional actions and/or arguments to be
+                        passed to the action(s)
+
+Options:
+  -l, --list            List all available actions
+  -a, --appinfo=<appInfoFile>
+                        App info file to use (default './app.yml')
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+                        (default: value of JPM_CACHE environment variable;
+                        whatever is set in Maven's settings.xml or
+                        $HOME/.m2/repository
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository to use when resolving
+                        artifacts. Can be preceded by a name and an equals
+                        sign, e.g. -r myrepo=https://my.repo.com/maven2.
+                        When needing to pass user and password you can set
+                        JPM_REPO_<name>_USER and JPM_REPO_<name>_PASSWORD
+                        environment variables.
+  -q, --quiet           Don't output non-essential information
+  -v, --verbose         Enable verbose output for debugging
+
+Example:
+  jpm do --list                # List all actions
+  jpm do build                 # Execute the build action
+  jpm do test --arg verbose    # Pass 'verbose' arg to test action
+  jpm do build -a --fresh test -a verbose  # Chain actions
+```
+
+#### clean / build / run / test
+
+Convenient aliases for executing the corresponding action from app.yml.
+
+```
+Usage: jpm clean [args...]
+Usage: jpm build [args...]
+Usage: jpm run [args...]
+Usage: jpm test [args...]
+
+Parameters:
+  [args...]             Optional arguments to pass to the action
+
+Options:
+  -a, --appinfo=<appInfoFile>
+                        App info file to use (default './app.yml')
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository
+  -v, --verbose         Enable verbose output for debugging
+
+Example:
+  jpm build
+  jpm run --verbose debug
+  jpm test
+```
+
+#### exec
+
+Execute a shell command with platform-independent path handling.
+
+```
+Usage: jpm exec [-Lqv] [-a=<appInfoFile>] [-c=<cacheDir>] [-d=<directory>]
+                [-r=<repositories>]... [command...]
+
+Parameters:
+  [command...]          The command to execute
+
+Options:
+  -a, --appinfo=<appInfoFile>
+                        App info file to use (default './app.yml')
+  -c, --cache=<cacheDir>
+                        Directory where downloaded artifacts will be cached
+  -d, --directory=<directory>
+                        Directory to copy artifacts to
+  -L, --no-links        Always copy artifacts, don't try to create symlinks
+  -r, --repo=<repositories>
+                        URL to additional repository
+  -q, --quiet           Don't output non-essential information
+  -v, --verbose         Enable verbose output for debugging
+
+Supported tokens:
+  {{deps}}              The classpath of all dependencies defined in app.yml
+  {/}                   The OS' file path separator
+  {:}                   The OS' class path separator
+  {~}                   The user's home directory using the OS' class path format
+  {;}                   The OS' command separator
+  {./file/path}         A path using the OS' path format (must start with './'!)
+  {./lib:./ext}         A class path using the OS' class path format
+  @[ ... ]              Writes contents to a file and inserts @<path-to-file>
+
+Example:
+  jpm exec javac -cp {{deps}} -d out/classes --source-path src/main/java App.java
+  jpm exec java -cp {{deps}} Main
+  jpm exec @kotlinc -cp {{deps}} -d out/classes src/main/kotlin/App.kt
 ```
 
 ## Development
