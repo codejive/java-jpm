@@ -23,7 +23,7 @@ public class SearchIT {
     @EnumSource(Search.Backends.class)
     void testSearchDoubleTerm(Search.Backends backend) throws IOException {
         Search s = Search.getBackend(backend);
-        Search.SearchResult res = s.findArtifacts("apache:httpclient", 10);
+        Search.SearchResult res = s.findArtifacts("apache:httpclient", 5);
         assertThat(res.count).isGreaterThan(1);
         assertThat(res.artifacts).isNotEmpty();
         res = s.findNextArtifacts(res);

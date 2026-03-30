@@ -86,7 +86,7 @@ public class SearchSolrRestImpl implements Search {
         } else if (parts.length == 2) {
             // Partial group/artifact match, we will filter the results
             // to remove those that match an inverted artifact/group
-            finalQuery = String.format("%s %s", parts[0], parts[1]);
+            finalQuery = String.format("%s AND %s", parts[0], parts[1]);
         } else {
             // Simple partial match
             finalQuery = query;
