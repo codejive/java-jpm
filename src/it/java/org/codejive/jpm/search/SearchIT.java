@@ -3,13 +3,8 @@ package org.codejive.jpm.search;
 import static org.assertj.core.api.Assertions.*;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-
-import org.codejive.jpm.search.Search;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.FieldSource;
 
 public class SearchIT {
     @ParameterizedTest

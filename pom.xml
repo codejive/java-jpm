@@ -205,6 +205,11 @@
                         </format>
                     </formats>
                     <java>
+                        <includes>
+                            <include>src/main/java/**/*.java</include>
+                            <include>src/test/java/**/*.java</include>
+                            <include>src/it/java/**/*.java</include>
+                        </includes>
                         <googleJavaFormat>
                             <version>${version.google-java-format}</version>
                             <style>AOSP</style>
