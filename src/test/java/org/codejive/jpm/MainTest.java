@@ -242,7 +242,8 @@ class MainTest {
             int exitCode = cmd.execute();
             assertThat(exitCode >= 0).isTrue(); // Should not be negative (internal error)
             assertThat(capture.getErr()).contains("Missing required subcommand");
-            assertThat(capture.getErr()).contains("Usage: jpm [-hvV] [COMMAND]");
+            assertThat(capture.getErr())
+                    .contains("Usage: jpm [-hvV] [--config=<configFile>] [COMMAND]");
             assertThat(capture.getErr())
                     .contains("Simple command line tool for managing Maven artifacts");
         }

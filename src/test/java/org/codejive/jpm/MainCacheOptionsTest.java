@@ -13,6 +13,7 @@ import org.junitpioneer.jupiter.ClearEnvironmentVariable;
 import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 /** Tests for Main class CLI cache option parsing. */
+@SetEnvironmentVariable(key = "JPM_CONFIG", value = "/nonexistent/config.yml")
 class MainCacheOptionsTest {
 
     @TempDir Path tempCacheDir1;

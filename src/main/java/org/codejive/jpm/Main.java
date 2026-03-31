@@ -5,7 +5,8 @@
 //DEPS org.yaml:snakeyaml:2.5
 //DEPS org.jline:jline-console-ui:3.30.6 org.jline:jline-terminal-jni:3.30.6
 //DEPS org.slf4j:slf4j-api:2.0.17 org.slf4j:slf4j-simple:2.0.17
-//SOURCES Jpm.java config/AppInfo.java search/Search.java search/SearchSmoRestImpl.java search/SearchSmoApiImpl.java
+//SOURCES Jpm.java config/AppInfo.java config/UserConfig.java
+//SOURCES search/Search.java search/SearchSolrRestImpl.java search/SearchSmoApiImpl.java
 //SOURCES util/CommandsParser.java util/FileUtils.java util/Resolver.java util/ScriptUtils.java util/SyncResult.java
 //SOURCES util/Version.java
 // spotless:on
@@ -20,6 +21,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import org.codejive.jpm.config.UserConfig;
 import org.codejive.jpm.search.Search.Backends;
 import org.codejive.jpm.util.SyncResult;
 import org.codejive.jpm.util.Version;
@@ -63,8 +65,10 @@ import picocli.CommandLine.Unmatched;
 public class Main {
 
     static boolean verbose = false;
+    static Path configFile = null;
 
     @Mixin VerboseMixin verboseMixin;
+    @Mixin ConfigMixin configMixin;
 
     @Command(
             name = "copy",
@@ -75,6 +79,7 @@ public class Main {
                             + "Example:\n  jpm copy org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Copy implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin ArtifactsMixin artifactsMixin;
 
@@ -89,8 +94,8 @@ public class Main {
         public Integer call() throws Exception {
             SyncResult stats =
                     Jpm.builder()
-                            .directory(artifactsMixin.directory)
-                            .noLinks(artifactsMixin.noLinks)
+                            .directory(artifactsMixin.getDirectory())
+                            .noLinks(artifactsMixin.getNoLinks())
                             .cacheDir(artifactsMixin.getCacheDir())
                             .build()
                             .copy(
@@ -115,6 +120,7 @@ public class Main {
                             + "Example:\n  jpm search httpclient\n")
     static class Search implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin AppInfoFileMixin appInfoFileMixin;
@@ -162,8 +168,8 @@ public class Main {
                         if ("install".equals(artifactAction)) {
                             SyncResult stats =
                                     Jpm.builder()
-                                            .directory(depsMixin.directory)
-                                            .noLinks(depsMixin.noLinks)
+                                            .directory(depsMixin.getDirectory())
+                                            .noLinks(depsMixin.getNoLinks())
                                             .cacheDir(depsMixin.getCacheDir())
                                             .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
@@ -176,8 +182,8 @@ public class Main {
                         } else if ("copy".equals(artifactAction)) {
                             SyncResult stats =
                                     Jpm.builder()
-                                            .directory(depsMixin.directory)
-                                            .noLinks(depsMixin.noLinks)
+                                            .directory(depsMixin.getDirectory())
+                                            .noLinks(depsMixin.getNoLinks())
                                             .cacheDir(depsMixin.getCacheDir())
                                             .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
@@ -218,8 +224,8 @@ public class Main {
         String[] search(String artifactPattern) {
             try {
                 return Jpm.builder()
-                        .directory(depsMixin.directory)
-                        .noLinks(depsMixin.noLinks)
+                        .directory(depsMixin.getDirectory())
+                        .noLinks(depsMixin.getNoLinks())
                         .cacheDir(depsMixin.getCacheDir())
                         .appFile(appInfoFileMixin.appInfoFile)
                         .build()
@@ -311,6 +317,7 @@ public class Main {
                             + "Example:\n  jpm install org.apache.httpcomponents:httpclient:4.5.14\n")
     static class Install implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
         @Mixin AppInfoFileMixin appInfoFileMixin;
@@ -319,8 +326,8 @@ public class Main {
         public Integer call() throws Exception {
             SyncResult stats =
                     Jpm.builder()
-                            .directory(optionalArtifactsMixin.directory)
-                            .noLinks(optionalArtifactsMixin.noLinks)
+                            .directory(optionalArtifactsMixin.getDirectory())
+                            .noLinks(optionalArtifactsMixin.getNoLinks())
                             .cacheDir(optionalArtifactsMixin.getCacheDir())
                             .appFile(appInfoFileMixin.appInfoFile)
                             .build()
@@ -343,6 +350,7 @@ public class Main {
                             + "Example:\n  jpm path org.apache.httpcomponents:httpclient:4.5.14\n")
     static class PrintPath implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin OptionalArtifactsMixin optionalArtifactsMixin;
         @Mixin AppInfoFileMixin appInfoFileMixin;
 
@@ -350,8 +358,8 @@ public class Main {
         public Integer call() throws Exception {
             List<Path> files =
                     Jpm.builder()
-                            .directory(optionalArtifactsMixin.directory)
-                            .noLinks(optionalArtifactsMixin.noLinks)
+                            .directory(optionalArtifactsMixin.getDirectory())
+                            .noLinks(optionalArtifactsMixin.getNoLinks())
                             .cacheDir(optionalArtifactsMixin.getCacheDir())
                             .appFile(appInfoFileMixin.appInfoFile)
                             .build()
@@ -396,6 +404,7 @@ public class Main {
                             + "  jpm exec @kotlinc -cp {{deps}} -d out/classes src/main/kotlin/App.kt\n")
     static class Exec implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin AppInfoFileMixin appInfoFileMixin;
@@ -408,8 +417,8 @@ public class Main {
             String cmd = String.join(" ", command);
             try {
                 return Jpm.builder()
-                        .directory(depsMixin.directory)
-                        .noLinks(depsMixin.noLinks)
+                        .directory(depsMixin.getDirectory())
+                        .noLinks(depsMixin.getNoLinks())
                         .cacheDir(depsMixin.getCacheDir())
                         .appFile(appInfoFileMixin.appInfoFile)
                         .verbose(!quietMixin.quiet)
@@ -436,6 +445,7 @@ public class Main {
                             + "  jpm do build -a --fresh test -a verbose\n")
     static class Do implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin QuietMixin quietMixin;
         @Mixin AppInfoFileMixin appInfoFileMixin;
@@ -467,8 +477,8 @@ public class Main {
                 if (list) {
                     List<String> actionNames =
                             Jpm.builder()
-                                    .directory(depsMixin.directory)
-                                    .noLinks(depsMixin.noLinks)
+                                    .directory(depsMixin.getDirectory())
+                                    .noLinks(depsMixin.getNoLinks())
                                     .cacheDir(depsMixin.getCacheDir())
                                     .appFile(appInfoFileMixin.appInfoFile)
                                     .build()
@@ -513,8 +523,8 @@ public class Main {
                         }
                         int exitCode =
                                 Jpm.builder()
-                                        .directory(depsMixin.directory)
-                                        .noLinks(depsMixin.noLinks)
+                                        .directory(depsMixin.getDirectory())
+                                        .noLinks(depsMixin.getNoLinks())
                                         .cacheDir(depsMixin.getCacheDir())
                                         .appFile(appInfoFileMixin.appInfoFile)
                                         .verbose(!quietMixin.quiet)
@@ -535,6 +545,7 @@ public class Main {
 
     abstract static class DoAlias implements Callable<Integer> {
         @Mixin VerboseMixin verboseMixin;
+        @Mixin ConfigMixin configMixin;
         @Mixin DepsMixin depsMixin;
         @Mixin AppInfoFileMixin appInfoFileMixin;
 
@@ -547,8 +558,8 @@ public class Main {
             try {
                 // Use only unmatched args for pass-through to preserve ordering
                 return Jpm.builder()
-                        .directory(depsMixin.directory)
-                        .noLinks(depsMixin.noLinks)
+                        .directory(depsMixin.getDirectory())
+                        .noLinks(depsMixin.getNoLinks())
                         .cacheDir(depsMixin.getCacheDir())
                         .appFile(appInfoFileMixin.appInfoFile)
                         .build()
@@ -601,17 +612,19 @@ public class Main {
     }
 
     static class DepsMixin {
+        // Cached user configuration loaded from ~/.config/jpm/config.yml or ~/.jpmcfg.yml
+        private transient UserConfig userConfig;
+
         @Option(
                 names = {"-d", "--directory"},
-                description = "Directory to copy artifacts to",
-                defaultValue = "deps")
+                description = "Directory to copy artifacts to (default: 'deps')")
         Path directory;
 
         @Option(
                 names = {"-L", "--no-links"},
-                description = "Always copy artifacts, don't try to create symlinks",
-                defaultValue = "false")
-        boolean noLinks;
+                description =
+                        "Always copy artifacts, don't try to create symlinks (default: false)")
+        Boolean noLinks;
 
         @Option(
                 names = {"-r", "--repo"},
@@ -625,9 +638,32 @@ public class Main {
                         "Directory where downloaded artifacts will be cached (default: value of JPM_CACHE environment variable; whatever is set in Maven's settings.xml or $HOME/.m2/repository")
         Path cacheDir;
 
+        /**
+         * Loads and caches the user configuration. Priority: --config option > JPM_CONFIG env var >
+         * ~/.config/jpm/config.yml > ~/.jpmcfg.yml.
+         *
+         * @return The user configuration (never null)
+         */
+        UserConfig getUserConfig() {
+            if (userConfig == null) {
+                userConfig = UserConfig.read(Main.configFile);
+            }
+            return userConfig;
+        }
+
+        /**
+         * Returns the cache directory to use. Priority: CLI option > UserConfig > JPM_CACHE env var
+         * > Maven default.
+         *
+         * @return The cache directory path or null to use Maven default
+         */
         Path getCacheDir() {
             if (cacheDir != null) {
                 return cacheDir;
+            }
+            Path userConfigCache = getUserConfig().cache();
+            if (userConfigCache != null) {
+                return userConfigCache;
             }
             String envCache = System.getenv("JPM_CACHE");
             if (envCache != null && !envCache.isEmpty()) {
@@ -642,8 +678,53 @@ public class Main {
             return null;
         }
 
+        /**
+         * Returns the directory to use for artifacts. Priority: CLI option > UserConfig > hardcoded
+         * default ('deps').
+         *
+         * @return The directory path
+         */
+        Path getDirectory() {
+            if (directory != null) {
+                return directory; // User explicitly set via CLI
+            }
+            Path userConfigDir = getUserConfig().directory();
+            if (userConfigDir != null) {
+                return userConfigDir; // From user config
+            }
+            return Path.of("deps"); // Hardcoded default
+        }
+
+        /**
+         * Returns whether to disable symlinks. Priority: CLI option > UserConfig > hardcoded
+         * default (false).
+         *
+         * @return true to disable symlinks, false otherwise
+         */
+        boolean getNoLinks() {
+            if (noLinks != null) {
+                return noLinks; // User explicitly set via CLI
+            }
+            Boolean userConfigNoLinks = getUserConfig().noLinks();
+            if (userConfigNoLinks != null) {
+                return userConfigNoLinks; // From user config
+            }
+            return false; // Hardcoded default
+        }
+
+        /**
+         * Returns the repository map. Priority: UserConfig repositories (base) + CLI repositories
+         * (override).
+         *
+         * @return Map of repository name to URL
+         */
         Map<String, String> getRepositoryMap() {
             Map<String, String> repoMap = new HashMap<>();
+
+            // Start with UserConfig repositories (lowest priority)
+            repoMap.putAll(getUserConfig().repositories());
+
+            // Add/override with CLI repositories
             for (String repo : repositories) {
                 String name;
                 String url;
@@ -702,6 +783,16 @@ public class Main {
                 description = "Enable verbose output for debugging")
         public void setVerbose(boolean verbose) {
             Main.verbose = verbose;
+        }
+    }
+
+    static class ConfigMixin {
+        @Option(
+                names = {"--config"},
+                description =
+                        "Path to user configuration file (default: JPM_CONFIG environment variable, ~/.config/jpm/config.yml, or ~/.jpmcfg.yml)")
+        public void setConfigFile(Path config) {
+            Main.configFile = config;
         }
     }
 
