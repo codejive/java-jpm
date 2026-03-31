@@ -39,7 +39,7 @@
         <version.picocli>4.7.7</version.picocli>
         <version.snakeyaml>2.5</version.snakeyaml>
         <version.slf4j>2.0.17</version.slf4j>
-        <version.spotless>3.0.0</version.spotless>
+        <version.spotless>3.4.0</version.spotless>
         <version.google-java-format>1.22.0</version.google-java-format>
         <version.junit>6.0.3</version.junit>
         <version.junit-pioneer>2.3.0</version.junit-pioneer>
