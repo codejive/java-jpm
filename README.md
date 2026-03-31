@@ -210,6 +210,10 @@ Commands:
 These options are supported by all commands:
 
 ```
+      --config=<configFile>
+                        Path to user configuration file (default: JPM_CONFIG
+                        environment variable, ~/.config/jpm/config.yml, or
+                        ~/.jpmcfg.yml)
   -c, --cache=<cacheDir>
                         Directory where downloaded artifacts will be cached
                         (default: value of JPM_CACHE environment variable;
@@ -533,6 +537,49 @@ actions:
   build: "javac -cp {{deps}} *.java"
   run: "java -cp {{deps}} HelloWorld"
   clean: "rm -f *.class"
+```
+
+## Configuration File
+
+`jpm` supports user-level configuration files to set default values for common command-line options. This allows you to configure preferences once instead of passing the same options repeatedly.
+
+### Configuration File Locations
+
+Configuration files are searched in the following order:
+
+1. **Explicit path** - Specified via `--config` option or `JPM_CONFIG` environment variable
+2. **`~/.config/jpm/config.yml`** - XDG Base Directory standard location (primary)
+3. **`~/.jpmcfg.yml`** - Fallback location (home directory)
+
+The first file found is used. If no configuration file exists, jpm uses built-in defaults.
+
+### Configuration File Format
+
+```yaml
+config:
+  cache: ~/my-jpm-cache
+  directory: libs
+  no-links: false
+  repositories:
+    myrepo: https://my.repo.com/maven2
+    private: https://private.repo.com/releases
+```
+
+### Configuration Options
+
+- **`cache`** - Directory for caching downloaded artifacts (equivalent to `--cache` option)
+- **`directory`** - Default directory to copy artifacts to (equivalent to `--directory` option)
+- **`no-links`** - Whether to copy files instead of creating symlinks (equivalent to `--no-links` option)
+- **`repositories`** - Map of repository names to URLs (merged with `--repo` options)
+
+### Path Expansion
+
+Paths in the configuration file support home directory expansion:
+
+```yaml
+config:
+  cache: ~/jpm-cache          # Expands to /home/user/jpm-cache
+  directory: ~/.local/lib/jpm # Expands to /home/user/.local/lib/jpm
 ```
 
 ## Development
