@@ -6,8 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.SetEnvironmentVariable;
 
 /** Tests for Main class CLI repository option parsing. */
+@SetEnvironmentVariable(key = "JPM_CONFIG", value = "/nonexistent/config.yml")
 class MainRepositoryOptionsTest {
 
     @Test
