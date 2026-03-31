@@ -45,7 +45,7 @@
         <version.junit-pioneer>2.3.0</version.junit-pioneer>
         <version.mockito>5.23.0</version.mockito>
         <version.assertj>3.27.7</version.assertj>
-        <version.maven-enforcer>3.5.0</version.maven-enforcer>
+        <version.maven-enforcer>3.6.2</version.maven-enforcer>
     </properties>
 
     <dependencyManagement>
