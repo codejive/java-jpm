@@ -43,7 +43,7 @@
         <version.google-java-format>1.22.0</version.google-java-format>
         <version.junit>6.0.3</version.junit>
         <version.junit-pioneer>2.3.0</version.junit-pioneer>
-        <version.mockito>5.20.0</version.mockito>
+        <version.mockito>5.23.0</version.mockito>
         <version.assertj>3.27.6</version.assertj>
         <version.maven-enforcer>3.5.0</version.maven-enforcer>
     </properties>
