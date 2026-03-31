@@ -15,6 +15,7 @@ package org.codejive.jpm;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -90,7 +91,7 @@ public class Main {
                     Jpm.builder()
                             .directory(artifactsMixin.directory)
                             .noLinks(artifactsMixin.noLinks)
-                            .cacheDir(artifactsMixin.cacheDir)
+                            .cacheDir(artifactsMixin.getCacheDir())
                             .build()
                             .copy(
                                     artifactsMixin.artifactNames,
@@ -163,7 +164,7 @@ public class Main {
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
-                                            .cacheDir(depsMixin.cacheDir)
+                                            .cacheDir(depsMixin.getCacheDir())
                                             .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
                                             .install(
@@ -177,7 +178,7 @@ public class Main {
                                     Jpm.builder()
                                             .directory(depsMixin.directory)
                                             .noLinks(depsMixin.noLinks)
-                                            .cacheDir(depsMixin.cacheDir)
+                                            .cacheDir(depsMixin.getCacheDir())
                                             .appFile(appInfoFileMixin.appInfoFile)
                                             .build()
                                             .copy(
@@ -219,7 +220,7 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
-                        .cacheDir(depsMixin.cacheDir)
+                        .cacheDir(depsMixin.getCacheDir())
                         .appFile(appInfoFileMixin.appInfoFile)
                         .build()
                         .search(artifactPattern, Math.min(max, 200), backend);
@@ -320,7 +321,7 @@ public class Main {
                     Jpm.builder()
                             .directory(optionalArtifactsMixin.directory)
                             .noLinks(optionalArtifactsMixin.noLinks)
-                            .cacheDir(optionalArtifactsMixin.cacheDir)
+                            .cacheDir(optionalArtifactsMixin.getCacheDir())
                             .appFile(appInfoFileMixin.appInfoFile)
                             .build()
                             .install(
@@ -351,7 +352,7 @@ public class Main {
                     Jpm.builder()
                             .directory(optionalArtifactsMixin.directory)
                             .noLinks(optionalArtifactsMixin.noLinks)
-                            .cacheDir(optionalArtifactsMixin.cacheDir)
+                            .cacheDir(optionalArtifactsMixin.getCacheDir())
                             .appFile(appInfoFileMixin.appInfoFile)
                             .build()
                             .path(
@@ -409,7 +410,7 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
-                        .cacheDir(depsMixin.cacheDir)
+                        .cacheDir(depsMixin.getCacheDir())
                         .appFile(appInfoFileMixin.appInfoFile)
                         .verbose(!quietMixin.quiet)
                         .build()
@@ -468,7 +469,7 @@ public class Main {
                             Jpm.builder()
                                     .directory(depsMixin.directory)
                                     .noLinks(depsMixin.noLinks)
-                                    .cacheDir(depsMixin.cacheDir)
+                                    .cacheDir(depsMixin.getCacheDir())
                                     .appFile(appInfoFileMixin.appInfoFile)
                                     .build()
                                     .listActions();
@@ -514,7 +515,7 @@ public class Main {
                                 Jpm.builder()
                                         .directory(depsMixin.directory)
                                         .noLinks(depsMixin.noLinks)
-                                        .cacheDir(depsMixin.cacheDir)
+                                        .cacheDir(depsMixin.getCacheDir())
                                         .appFile(appInfoFileMixin.appInfoFile)
                                         .verbose(!quietMixin.quiet)
                                         .build()
@@ -548,7 +549,7 @@ public class Main {
                 return Jpm.builder()
                         .directory(depsMixin.directory)
                         .noLinks(depsMixin.noLinks)
-                        .cacheDir(depsMixin.cacheDir)
+                        .cacheDir(depsMixin.getCacheDir())
                         .appFile(appInfoFileMixin.appInfoFile)
                         .build()
                         .executeAction(actionName(), args, depsMixin.getRepositoryMap());
@@ -623,6 +624,23 @@ public class Main {
                 description =
                         "Directory where downloaded artifacts will be cached (default: value of JPM_CACHE environment variable; whatever is set in Maven's settings.xml or $HOME/.m2/repository")
         Path cacheDir;
+
+        Path getCacheDir() {
+            if (cacheDir != null) {
+                return cacheDir;
+            }
+            String envCache = System.getenv("JPM_CACHE");
+            if (envCache != null && !envCache.isEmpty()) {
+                try {
+                    return Path.of(envCache);
+                } catch (InvalidPathException e) {
+                    System.err.println(
+                            "Warning: Invalid path in JPM_CACHE environment variable, ignoring: "
+                                    + envCache);
+                }
+            }
+            return null;
+        }
 
         Map<String, String> getRepositoryMap() {
             Map<String, String> repoMap = new HashMap<>();
