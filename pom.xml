@@ -41,11 +41,24 @@
         <version.slf4j>2.0.17</version.slf4j>
         <version.spotless>3.0.0</version.spotless>
         <version.google-java-format>1.22.0</version.google-java-format>
-        <version.junit>6.0.0</version.junit>
+        <version.junit>6.0.3</version.junit>
+        <version.junit-pioneer>2.3.0</version.junit-pioneer>
         <version.mockito>5.20.0</version.mockito>
         <version.assertj>3.27.6</version.assertj>
         <version.maven-enforcer>3.5.0</version.maven-enforcer>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${version.junit}</version> 
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <dependency>
@@ -98,7 +111,17 @@
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
-            <version>${version.junit}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit-pioneer</groupId>
+            <artifactId>junit-pioneer</artifactId>
+            <version>${version.junit-pioneer}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -279,6 +302,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
