@@ -16,6 +16,7 @@ package org.codejive.jpm;
 import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.*;
@@ -23,6 +24,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.codejive.jpm.config.UserConfig;
 import org.codejive.jpm.search.Search.Backends;
+import org.codejive.jpm.util.FileUtils;
 import org.codejive.jpm.util.SyncResult;
 import org.codejive.jpm.util.Version;
 import org.jline.consoleui.elements.InputValue;
@@ -612,13 +614,15 @@ public class Main {
     }
 
     static class DepsMixin {
+        private static final String DEFAULT_DIRECTORY = "deps";
+
         // Cached user configuration loaded from ~/.config/jpm/config.yml or ~/.jpmcfg.yml
         private transient UserConfig userConfig;
 
         @Option(
                 names = {"-d", "--directory"},
                 description = "Directory to copy artifacts to (default: 'deps')")
-        Path directory;
+        String directory;
 
         @Option(
                 names = {"-L", "--no-links"},
@@ -636,7 +640,7 @@ public class Main {
                 names = {"-c", "--cache"},
                 description =
                         "Directory where downloaded artifacts will be cached (default: value of JPM_CACHE environment variable; whatever is set in Maven's settings.xml or $HOME/.m2/repository")
-        Path cacheDir;
+        String cacheDir;
 
         /**
          * Loads and caches the user configuration. Priority: --config option > JPM_CONFIG env var >
@@ -658,21 +662,19 @@ public class Main {
          * @return The cache directory path or null to use Maven default
          */
         Path getCacheDir() {
-            if (cacheDir != null) {
-                return cacheDir;
+            String dir = cacheDir;
+            if (dir == null) {
+                dir = getUserConfig().cache();
             }
-            Path userConfigCache = getUserConfig().cache();
-            if (userConfigCache != null) {
-                return userConfigCache;
+            if (dir == null) {
+                dir = System.getenv("JPM_CACHE");
             }
-            String envCache = System.getenv("JPM_CACHE");
-            if (envCache != null && !envCache.isEmpty()) {
+            if (dir != null && !dir.isEmpty()) {
                 try {
-                    return Path.of(envCache);
+                    return FileUtils.expandHomePath(dir);
                 } catch (InvalidPathException e) {
                     System.err.println(
-                            "Warning: Invalid path in JPM_CACHE environment variable, ignoring: "
-                                    + envCache);
+                            "Warning: The specified cache path is invalid, ignoring: " + dir);
                 }
             }
             return null;
@@ -685,14 +687,28 @@ public class Main {
          * @return The directory path
          */
         Path getDirectory() {
-            if (directory != null) {
-                return directory; // User explicitly set via CLI
+            String dir = directory;
+            if (dir == null) {
+                dir = getUserConfig().directory();
             }
-            Path userConfigDir = getUserConfig().directory();
-            if (userConfigDir != null) {
-                return userConfigDir; // From user config
+            if (dir == null) {
+                dir = DEFAULT_DIRECTORY;
             }
-            return Path.of("deps"); // Hardcoded default
+            if (dir == null || dir.isEmpty()) {
+                return null;
+            }
+            Path result;
+            try {
+                result = FileUtils.expandHomePath(dir);
+            } catch (InvalidPathException e) {
+                throw new IllegalArgumentException(
+                        "The specified output directory path is invalid: " + dir);
+            }
+            if (Files.isRegularFile(result)) {
+                throw new IllegalArgumentException(
+                        "The specified output directory is a file, not a directory: " + dir);
+            }
+            return result;
         }
 
         /**
