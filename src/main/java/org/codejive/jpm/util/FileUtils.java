@@ -105,4 +105,18 @@ public class FileUtils {
             return null;
         }
     }
+
+    /**
+     * Expands a path starting with "~/" to use the user's home directory.
+     *
+     * @param pathStr The path string to expand
+     * @return A Path with "~/" expanded to the user's home directory
+     */
+    public static Path expandHomePath(String pathStr) {
+        if (pathStr.startsWith("~/")) {
+            String userHome = System.getProperty("user.home");
+            return Paths.get(userHome, pathStr.substring(2));
+        }
+        return Paths.get(pathStr);
+    }
 }

@@ -15,8 +15,8 @@ import org.yaml.snakeyaml.Yaml;
  * options.
  */
 public class UserConfig {
-    private Path cache;
-    private Path directory;
+    private String cache;
+    private String directory;
     private Boolean noLinks;
     private final Map<String, String> repositories = new LinkedHashMap<>();
 
@@ -26,11 +26,11 @@ public class UserConfig {
     /** The fallback user config file location. */
     public static final String USER_CONFIG_FILE_FALLBACK = ".jpmcfg.yml";
 
-    public Path cache() {
+    public String cache() {
         return cache;
     }
 
-    public Path directory() {
+    public String directory() {
         return directory;
     }
 
@@ -152,8 +152,7 @@ public class UserConfig {
             if (config.containsKey("cache")) {
                 Object cacheObj = config.get("cache");
                 if (cacheObj instanceof String) {
-                    String cachePath = (String) cacheObj;
-                    userConfig.cache = expandHomePath(cachePath);
+                    userConfig.cache = (String) cacheObj;
                 } else {
                     System.err.println(
                             "Warning: 'cache' must be a string path, ignoring: " + cacheObj);
@@ -164,8 +163,7 @@ public class UserConfig {
             if (config.containsKey("directory")) {
                 Object dirObj = config.get("directory");
                 if (dirObj instanceof String) {
-                    String dirPath = (String) dirObj;
-                    userConfig.directory = expandHomePath(dirPath);
+                    userConfig.directory = (String) dirObj;
                 } else {
                     System.err.println(
                             "Warning: 'directory' must be a string path, ignoring: " + dirObj);
@@ -206,20 +204,5 @@ public class UserConfig {
         }
 
         return userConfig;
-    }
-
-    /**
-     * Expands a path starting with "~/" to use the user's home directory. Handles cross-platform
-     * paths.
-     *
-     * @param pathStr The path string to expand
-     * @return A Path with "~/" expanded to the user's home directory
-     */
-    private static Path expandHomePath(String pathStr) {
-        if (pathStr.startsWith("~/")) {
-            String userHome = System.getProperty("user.home");
-            return Paths.get(userHome, pathStr.substring(2));
-        }
-        return Paths.get(pathStr);
     }
 }
