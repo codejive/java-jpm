@@ -41,7 +41,7 @@
         <version.slf4j>2.0.17</version.slf4j>
         <version.spotless>3.4.0</version.spotless>
         <version.google-java-format>1.22.0</version.google-java-format>
-        <version.junit>6.0.3</version.junit>
+        <version.junit>6.1.0</version.junit>
         <version.junit-pioneer>2.3.0</version.junit-pioneer>
         <version.mockito>5.23.0</version.mockito>
         <version.assertj>3.27.7</version.assertj>
