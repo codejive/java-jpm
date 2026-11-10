@@ -152,7 +152,8 @@ public class SearchSolrRestImpl implements Search {
 
     private static boolean acceptDoc(MsrDoc d, String[] parts) {
         return d.ec != null
-                && (d.ec.contains(".jar") || d.ec.contains("jar"))
+                && (!d.ec.isEmpty() && (d.ec.contains(".jar") || d.ec.contains("jar"))
+                        || d.ec.isEmpty() && (d.p != null && d.p.equals("jar")))
                 && (parts.length != 2 || d.g.contains(parts[0]) && d.a.contains(parts[1]));
     }
 
